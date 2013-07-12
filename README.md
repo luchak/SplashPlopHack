@@ -1,4 +1,4 @@
 SplashPlopHack
 ==============
 
-Simple 2D SPH with PBF.
+Simple 2D liquids.
