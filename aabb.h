@@ -40,6 +40,10 @@ class AABB {
   inline const Vec2& min() const { return min_; }
   inline const Vec2& max() const { return max_; }
 
+  inline Vec2 size() const { return max_ - min_; }
+  inline Real width() const { return max_[0] - min_[0]; }
+  inline Real height() const { return max_[1] - min_[1]; }
+
  private:
   Vec2 min_;
   Vec2 max_;

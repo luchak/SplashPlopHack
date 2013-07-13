@@ -1,6 +1,7 @@
 #include <cmath>
 #include <cstdlib>
-#include <memory>
+#//include <iostream>
+#//include <memory>
 
 #ifdef __APPLE__
 #include <OpenGL/OpenGL.h>
@@ -44,9 +45,10 @@ void TimedIdle(int flag) {
 void DrawCircle(float center_x, float center_y, float radius) {
   glPushMatrix();
   glTranslatef(center_x, center_y, 0.0);
-  glBegin(GL_LINE_LOOP);
-  for (int i = 0; i < 16; ++i) {
-    glVertex2f(cos(i * (M_PI / 8.0))*radius, sin(i * (M_PI / 8.0))*radius); 
+  glBegin(GL_TRIANGLE_FAN);
+  glVertex2f(0.0, 0.0);
+  for (int i = 0; i <= 12; ++i) {
+    glVertex2f(cos(i * (M_PI / 6.0))*radius, sin(i * (M_PI / 6.0))*radius); 
   }
   glEnd();
   glPopMatrix();
@@ -84,7 +86,9 @@ void Render() {
 
   for (int i = 0; i < ps->size(); ++i) {
     if (ps->isActive(i)) {
-      DrawCircle(ps->pos(i)[0], ps->pos(i)[1], ps->radius(i));
+      SPHack::Real density = ps->density(i);
+      glColor3f(density-1.0, 1.0-fabs(1.0-density), 1.0-density);
+      DrawCircle(ps->pos(i)[0], ps->pos(i)[1], ps->radius()/2.0);
     }
   }
 
@@ -96,6 +100,10 @@ void KeyDown(unsigned char key, int x, int y) {
     case 27:
       ProfilerFlush();
       exit(0);
+      break;
+
+    case 'n':
+      Tick();
       break;
 
     case ' ':
@@ -111,7 +119,7 @@ void MouseButton(int button, int state, int x, int y) {
 }
 
 int main(int argc, char* argv[]) {
-  paused = false;
+  paused = true;
 
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
@@ -128,8 +136,12 @@ int main(int argc, char* argv[]) {
 
   glutTimerFunc(0, &TimedIdle, 0);
 
-  ps.reset(new SPHack::ParticleSystem(SPHack::AABB(SPHack::Vec2(0.0, 0.0), SPHack::Vec2(1.0, 1.0))));
-  ps->AddParticles(SPHack::AABB(SPHack::Vec2(0.0, 0.0), SPHack::Vec2(0.2, 0.5)), 0.02);
+  ps.reset(
+      new SPHack::ParticleSystem(
+          SPHack::AABB(SPHack::Vec2(0.0, 0.0), SPHack::Vec2(1.0, 1.0)),
+          0.03));
+  ps->AddParticles(SPHack::AABB(SPHack::Vec2(0.0, 0.0), SPHack::Vec2(0.3, 0.7)));
+  ps->InitDensity();
 
   glutMainLoop();
 }

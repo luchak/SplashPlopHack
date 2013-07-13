@@ -1,6 +1,11 @@
 #ifndef MATH_H_
 #define MATH_H_
 
+#include <cassert>
+#include <cmath>
+#include <iostream>
+#include <ostream>
+
 namespace SPHack {
 
 typedef float Real;
@@ -24,6 +29,20 @@ struct Vec2 {
      }
 
      return 0.0;
+   }
+
+   inline Real squaredNorm() const {
+     const Real result = x*x + y*y;
+     return result;
+   }
+
+   inline Real norm() const {
+     return sqrt(squaredNorm());
+   }
+
+   inline Vec2 normalized() const {
+     const Real length = norm();
+     return (length > 0.0) ? Vec2(x/length, y/length) : Vec2(0.0, 0.0);
    }
 
    Real x;
@@ -64,6 +83,9 @@ inline Vec2& operator/=(Vec2& a, Real b) {
   return a;
 }
 
+inline std::ostream& operator<<(std::ostream& out, const Vec2& a) {
+  return out << "Vec2(" << a.x << ", " << a.y << ")";
+}
 
 }  // namespace SPHack
 

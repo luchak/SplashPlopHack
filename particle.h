@@ -2,51 +2,87 @@
 #define PARTICLE_H_
 
 #include <array>
+#include <memory>
 #include <vector>
 
 #include "aabb.h"
+#include "kernels.h"
 #include "math.h"
+#include "neighbor_finder.h"
+#include "particle_types.h"
 
 namespace SPHack {
 
 static const int kMaxParticles= 1 << 16;
 
-typedef int ParticleIDType;
-typedef char ParticleFlagType;
-
 static const ParticleFlagType PARTICLE_FLAG_ACTIVE = 1 << 0;
+
+struct PressureParticle {
+  Vec2 pos;
+  Vec2 pos_delta;
+
+  Real lambda;
+
+  ParticleIDType id;
+};
 
 class ParticleSystem {
  public:
-  explicit ParticleSystem(const AABB& bounds);
+  ParticleSystem(const AABB& bounds, Real radius);
 
-  void AddParticles(const AABB& region, Real radius);
+  void AddParticles(const AABB& region);
 
   void ApplyForces(Real dt);
   void PredictPositions(Real dt);
-  void EnforceConstraints();
   void UpdateVelocitiesAndCommit(Real dt); 
 
   void Step(Real dt);
 
   bool isActive(ParticleIDType pid) const { return (flag_[pid] & PARTICLE_FLAG_ACTIVE) != 0; }
   Vec2 pos(ParticleIDType pid) const { return pos_[pid]; }
-  Real radius(ParticleIDType pid) const { return radius_[pid]; }
+  Vec2 predicted_pos(ParticleIDType pid) const { return predicted_pos_[pid]; }
+  Real radius() const { return radius_; }
   int size() const { return kMaxParticles; }
+  const AABB& bounds() const { return bounds_; }
+  Real density(ParticleIDType pid) const { return density_[pid]; }
+
+  void InitDensity();
 
  private:
-  bool CreateParticle(const Vec2& pos, const Vec2& vel, Real radius);
+  bool CreateParticle(const Vec2& pos, const Vec2& vel);
+
+  void BuildGrid();
+  Real CalculateParticleLambda(const PressureParticle& pi, int x, int y);
+  void CalculateLambdaOnGrid();
+  Vec2 CalculateParticlePressureDelta(const PressureParticle& pj, int x, int y);
+  void CalculatePressureDeltaOnGrid();
+  void ApplyPressureDeltaOnGrid();
+  void EnforceBoundariesOnGrid();
+  void CopyPositionsFromGrid();
+
+  inline int CellID(int x, int y) const { return y*grid_width_ + x; }
 
   AABB bounds_;
 
+  Real radius_;
+  KernelEvaluator kernel_;
   std::array<Vec2, kMaxParticles> pos_;
   std::array<Vec2, kMaxParticles> predicted_pos_;
   std::array<Vec2, kMaxParticles> vel_;
-  std::array<Real, kMaxParticles> radius_;
+  std::array<Real, kMaxParticles> density_;
   std::array<ParticleFlagType, kMaxParticles> flag_;
   std::vector<ParticleIDType> available_particles_;
 
+  Real grid_delta_;
+  std::vector<std::vector<PressureParticle>> grid_;
+  int grid_width_;
+  int grid_height_;
+
+  Real cfm_epsilon_;
+  Real density_inv_;
+
   Vec2 gravity_;
+
 };
   
 }  // namespace SPHack

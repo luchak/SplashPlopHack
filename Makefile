@@ -2,7 +2,8 @@
 
 BIN_DIR = bin
 
-LIB_CPP_SRCS = particle.cc
+LIB_CPP_SRCS = kernels.cc \
+							 particle.cc
 
 LIB_SRCS = ${LIB_CPP_SRCS}
 
@@ -34,7 +35,7 @@ ifneq (${MAKECMDGOALS},"clean")
 -include build.mk
 endif
 
-CPPFLAGS = -iquote . -I${EIGEN_INCLUDE} -Wall ${DEBUG_FLAGS} ${PLATFORM_CPPFLAGS} -std=c++11
+CPPFLAGS = -iquote . -Wall ${OPT_FLAGS} ${PLATFORM_CPPFLAGS} -std=c++11
 LDFLAGS =  -lpthread ${GL_LIB_FLAGS} ${PLATFORM_LDFLAGS} -lprofiler
 
 build.mk: find_prereqs.sh
