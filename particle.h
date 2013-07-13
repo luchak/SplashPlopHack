@@ -13,7 +13,7 @@
 
 namespace SPHack {
 
-static const int kMaxParticles= 1 << 16;
+static const int kMaxParticles= 1 << 12;
 
 static const ParticleFlagType PARTICLE_FLAG_ACTIVE = 1 << 0;
 
@@ -32,10 +32,6 @@ class ParticleSystem {
 
   void AddParticles(const AABB& region);
 
-  void ApplyForces(Real dt);
-  void PredictPositions(Real dt);
-  void UpdateVelocitiesAndCommit(Real dt); 
-
   void Step(Real dt);
 
   bool isActive(ParticleIDType pid) const { return (flag_[pid] & PARTICLE_FLAG_ACTIVE) != 0; }
@@ -51,6 +47,11 @@ class ParticleSystem {
  private:
   bool CreateParticle(const Vec2& pos, const Vec2& vel);
 
+  void ApplyForces(Real dt);
+  void PredictPositions(Real dt);
+  void UpdateVelocities(Real dt); 
+  void CommitPositions();
+
   void BuildGrid();
   Real CalculateParticleLambda(const PressureParticle& pi, int x, int y);
   void CalculateLambdaOnGrid();
@@ -59,12 +60,14 @@ class ParticleSystem {
   void ApplyPressureDeltaOnGrid();
   void EnforceBoundariesOnGrid();
   void CopyPositionsFromGrid();
+  void ApplyViscosityOnGrid(Real dt);
 
   inline int CellID(int x, int y) const { return y*grid_width_ + x; }
 
   AABB bounds_;
 
   Real radius_;
+  Real radius2_;
   KernelEvaluator kernel_;
   std::array<Vec2, kMaxParticles> pos_;
   std::array<Vec2, kMaxParticles> predicted_pos_;
@@ -83,6 +86,7 @@ class ParticleSystem {
 
   Vec2 gravity_;
 
+  Real boundary_margin_;
 };
   
 }  // namespace SPHack

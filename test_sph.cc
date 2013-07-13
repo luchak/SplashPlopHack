@@ -24,6 +24,13 @@ static const double ms_per_frame = 1000.0 / target_fps;
 
 bool paused;
 std::unique_ptr<SPHack::ParticleSystem> ps;
+int window_w;
+int window_h;
+float world_x_min;
+float world_y_min;
+float world_x_size;
+float world_y_size;
+int selected_particle;
 
 void Tick() {
   ps->Step(1.0 / target_fps);
@@ -59,6 +66,9 @@ void Reshape(int w, int h) {
     h = 1;
   }
 
+  window_w = w;
+  window_h = h;
+
   double ratio = 1.0 * w / h;
 
   glMatrixMode(GL_PROJECTION);
@@ -66,8 +76,16 @@ void Reshape(int w, int h) {
   glViewport(0, 0, w, h);
   //gluPerspective(45.0, ratio, 5.0, 1000.0);
   if (ratio < 1.0) {
+    world_x_min = -0.1;
+    world_y_min = -0.1/ratio;
+    world_x_size = 1.2;
+    world_y_size = 1.2/ratio;
     gluOrtho2D(-0.1, 1.1, -0.1/ratio, 1.1/ratio);
   } else {
+    world_y_min = -0.1;
+    world_x_min = -0.1*ratio;
+    world_y_size = 1.2;
+    world_x_size = 1.2*ratio;
     gluOrtho2D(-ratio*0.1, ratio*1.1, -0.1, 1.1);
   }
   glMatrixMode(GL_MODELVIEW);
@@ -87,8 +105,12 @@ void Render() {
   for (int i = 0; i < ps->size(); ++i) {
     if (ps->isActive(i)) {
       SPHack::Real density = ps->density(i);
-      glColor3f(density-1.0, 1.0-fabs(1.0-density), 1.0-density);
-      DrawCircle(ps->pos(i)[0], ps->pos(i)[1], ps->radius()/2.0);
+      if (i == selected_particle) {
+        glColor3f(1.0, 1.0, 1.0);
+      } else {
+        glColor3f(density-1.0, 1.0-fabs(1.0-density), 1.0-density);
+      }
+      DrawCircle(ps->pos(i)[0], ps->pos(i)[1], ps->radius()/4.0);
     }
   }
 
@@ -116,6 +138,26 @@ void KeyDown(unsigned char key, int x, int y) {
 }
 
 void MouseButton(int button, int state, int x, int y) {
+  if (state == GLUT_DOWN) {
+    float world_x = x*world_x_size / window_w + world_x_min;
+    float world_y = (window_h - y)*world_y_size / window_h + world_y_min;
+    SPHack::Vec2 world_pos(world_x, world_y);
+
+    selected_particle = 1944;
+    float closest_sq_dist = 1e20;
+    for (int i = 0; i < ps->size(); ++i) {
+      if (ps->isActive(i)) {
+        SPHack::Real sq_dist = (world_pos - ps->pos(i)).squaredNorm();
+        
+        if (sq_dist < closest_sq_dist) {
+          closest_sq_dist = sq_dist;
+          selected_particle = i;
+        }
+      }
+    }
+
+    std::cerr << "clicked particle id " << selected_particle << std::endl;
+  }
 }
 
 int main(int argc, char* argv[]) {
@@ -124,8 +166,10 @@ int main(int argc, char* argv[]) {
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
   glutInitWindowPosition(100, 100);
-  glutInitWindowSize(800, 800);
-  glutCreateWindow("GLUT");
+  window_w = 1000;
+  window_h = 1000;
+  glutInitWindowSize(window_w, window_h);
+  glutCreateWindow("SPHack");
 
   glutReshapeFunc(&Reshape);
   glutDisplayFunc(&Render);
@@ -139,9 +183,12 @@ int main(int argc, char* argv[]) {
   ps.reset(
       new SPHack::ParticleSystem(
           SPHack::AABB(SPHack::Vec2(0.0, 0.0), SPHack::Vec2(1.0, 1.0)),
-          0.03));
+          0.016));
   ps->AddParticles(SPHack::AABB(SPHack::Vec2(0.0, 0.0), SPHack::Vec2(0.3, 0.7)));
   ps->InitDensity();
+
+  Reshape(window_w, window_h);
+  selected_particle = -1;
 
   glutMainLoop();
 }

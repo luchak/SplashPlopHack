@@ -7,7 +7,7 @@ namespace SPHack {
 
 ParticleSystem::ParticleSystem(const AABB& bounds, Real radius) : bounds_(bounds), radius_(radius), kernel_(radius) {
   available_particles_.reserve(kMaxParticles);
-  for (int i = 0; i < kMaxParticles; ++i) {
+  for (int i = kMaxParticles - 1; i >= 0; --i) {
     available_particles_.push_back(i);
   }
 
@@ -22,23 +22,30 @@ ParticleSystem::ParticleSystem(const AABB& bounds, Real radius) : bounds_(bounds
     grid_cell.reserve(estimated_particles_per_cell);
   }
 
-  static const Real density = 1.7e2 / (radius_ * radius_);
+  radius2_ = radius_ * radius_;
+  static const Real density = 1.7e2 / radius2_;
   density_inv_ = 1.0 / density;
   cfm_epsilon_ = 1e3;
 
   kernel_ = KernelEvaluator(radius_);
+  
+  boundary_margin_ = radius_ * 0.5;
 }
 
 void ParticleSystem::AddParticles(const AABB& region) {
   AABB clipped_region = bounds_.Intersect(region);
 
-  for (Real x = clipped_region.min()[0] + 1e-8; x < clipped_region.max()[0] - 1e-8; x += 0.5*radius_) {
-    for (Real y = clipped_region.min()[1] + 1e-8; y < clipped_region.max()[1] - 1e-8; y += 0.5*radius_) {
+  int particles_added = 0;
+  for (Real x = clipped_region.min()[0] + boundary_margin_; x < clipped_region.max()[0] - boundary_margin_; x += 0.5*radius_) {
+    for (Real y = clipped_region.min()[1] + boundary_margin_; y < clipped_region.max()[1] - boundary_margin_; y += 0.5*radius_) {
       if (!CreateParticle(Vec2(x, y), Vec2(0.0, 0.0))) {
         std::cerr << "Failed to create particle at: " << x << " " << y << std::endl;
+      } else {
+        ++particles_added;
       }
     }
- }
+  }
+  std::cerr << particles_added << " particles added" << std::endl;
 }
 
 void ParticleSystem::ApplyForces(Real dt) {
@@ -53,26 +60,35 @@ void ParticleSystem::PredictPositions(Real dt) {
   }
 }
 
-void ParticleSystem::UpdateVelocitiesAndCommit(Real dt) {
+void ParticleSystem::UpdateVelocities(Real dt) {
   for (size_t i = 0; i < size(); ++i) {
     vel_[i] = (predicted_pos_[i] - pos_[i]) * (1.0 / dt);
   }
+}
+
+void ParticleSystem::CommitPositions() {
   pos_.swap(predicted_pos_);
 }
 
 void ParticleSystem::Step(Real dt) {
-  ApplyForces(dt);
-  PredictPositions(dt);
-  BuildGrid();
-  static const int kIters = 4;
-  for (int i = 0; i < kIters; ++i) {
-    CalculateLambdaOnGrid();
-    CalculatePressureDeltaOnGrid();
-    ApplyPressureDeltaOnGrid();
-    EnforceBoundariesOnGrid();
+  static const int kSubsteps = 2;
+  dt /= kSubsteps;
+  for (int substep = 0; substep < kSubsteps; ++substep) {
+    ApplyForces(dt);
+    PredictPositions(dt);
+    BuildGrid();
+    static const int kIters = 3;
+    for (int i = 0; i < kIters; ++i) {
+      CalculateLambdaOnGrid();
+      CalculatePressureDeltaOnGrid();
+      ApplyPressureDeltaOnGrid();
+      EnforceBoundariesOnGrid();
+    }
+    CopyPositionsFromGrid();
+    UpdateVelocities(dt);
+    ApplyViscosityOnGrid(dt);
+    CommitPositions();
   }
-  CopyPositionsFromGrid();
-  UpdateVelocitiesAndCommit(dt);
 }
 
 void ParticleSystem::InitDensity() {
@@ -89,6 +105,9 @@ void ParticleSystem::InitDensity() {
   }
 
   density_inv_ /= max_density;
+  cfm_epsilon_ = 0.02 / density_inv_;
+  std::cerr << "density: " << (1.0 / density_inv_) << std::endl;
+  std::cerr << "cfm eps: " << cfm_epsilon_ << std::endl;
 }
 
 bool ParticleSystem::CreateParticle(const Vec2& pos, const Vec2& vel) {
@@ -143,6 +162,7 @@ Real ParticleSystem::CalculateParticleLambda(const PressureParticle& pi, int x, 
       for (auto& pj : grid_[CellID(nx, ny)]) {
         if (pi.id == pj.id) continue;
         const Vec2 r = pi.pos - pj.pos;
+        if (r.squaredNorm() > radius2_) continue;
         density_i += kernel_.Poly6(r);
         const Vec2 grad = kernel_.SpikyGrad(r);
         cj_grad_norm_squared_sum += grad.squaredNorm();
@@ -180,7 +200,11 @@ Vec2 ParticleSystem::CalculateParticlePressureDelta(const PressureParticle& pi, 
       for (auto& pj : grid_[CellID(nx, ny)]) {
         if (pi.id == pj.id) continue;
         const Vec2 r = pi.pos - pj.pos;
-        delta += (pi.lambda + pj.lambda) * kernel_.SpikyGrad(r);
+        if (r.squaredNorm() > radius2_) continue;
+        Real scorr = kernel_.Poly6(r)/kernel_.Poly6(Vec2(0.0,0.2*radius_));
+        scorr = scorr*scorr*scorr*scorr;
+        scorr *= -0.0000001;
+        delta += (pi.lambda + pj.lambda + scorr) * kernel_.SpikyGrad(r);
       }
     }
   }
@@ -208,7 +232,7 @@ void ParticleSystem::ApplyPressureDeltaOnGrid() {
 }
 
 void ParticleSystem::EnforceBoundariesOnGrid() {
-  AABB shrunk_bounds = bounds_.Shrink(1e-5);
+  AABB shrunk_bounds = bounds_.Shrink(boundary_margin_);
   for (auto& grid_cell : grid_) {
     for (auto& particle : grid_cell) {
       particle.pos = shrunk_bounds.Clip(particle.pos);
@@ -222,6 +246,10 @@ void ParticleSystem::CopyPositionsFromGrid() {
       predicted_pos_[particle.id] = particle.pos;
     }
   }
+}
+
+void ParticleSystem::ApplyViscosityOnGrid(Real dt) {
+   
 }
   
 }  // namespace SPHack
