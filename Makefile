@@ -9,8 +9,8 @@ LIB_SRCS = ${LIB_CPP_SRCS}
 
 BIN_SRCS = test_sph.cc
 
-LIB_OBJS = $(LIB_CPP_SRCS:%.cc=%.o)
-BIN_OBJS = $(BIN_SRCS:%.cc=%.o)
+LIB_OBJS = $(LIB_CPP_SRCS:%.cc=objs/%.o)
+BIN_OBJS = $(BIN_SRCS:%.cc=objs/%.o)
 BINS = $(BIN_SRCS:%.cc=bin/%)
 
 OBJS = ${LIB_OBJS} ${BIN_OBJS}
@@ -31,7 +31,7 @@ all: ${BINS}
 
 # We don't want to remake depfiles when we clean.
 ifneq (${MAKECMDGOALS},"clean")
--include $(DEP_SRC_OBJS:%.o=${DEPDIR}/%.d)
+-include $(DEP_SRC_OBJS:objs/%.o=${DEPDIR}/%.d)
 -include build.mk
 endif
 
@@ -41,10 +41,7 @@ LDFLAGS =  -lpthread ${GL_LIB_FLAGS} ${PLATFORM_LDFLAGS} -lprofiler
 build.mk: find_prereqs.sh
 	./find_prereqs.sh > build.mk
 
-#project_lib.a: ${LIB_OBJS}
-#	${AR} $@ $^
-
-${BINS}: bin/%: %.o ${LIB_OBJS}
+${BINS}: bin/%: objs/%.o ${LIB_OBJS}
 	@mkdir -p bin
 	${CPP} -o $@ $^ ${LDFLAGS}
 
@@ -53,8 +50,9 @@ ${DEPDIR}/%.d: %.cc
 	@mkdir -p ${DEPDIR}/${*D}
 	@${MAKEDEPEND}
 
-%.o: %.cc
+objs/%.o: %.cc
+	@mkdir -p objs
 	${CPP} -o $@ $< -c ${CPPFLAGS}
 
 clean:
-	rm -f ${LIB_OBJS} ${BIN_OBJS} ${BINS} project_lib.a build.mk
+	rm -f ${LIB_OBJS} ${BIN_OBJS} ${BINS} build.mk

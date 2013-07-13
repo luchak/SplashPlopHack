@@ -8,7 +8,6 @@
 #include "aabb.h"
 #include "kernels.h"
 #include "math.h"
-#include "neighbor_finder.h"
 #include "particle_types.h"
 
 namespace SPHack {
