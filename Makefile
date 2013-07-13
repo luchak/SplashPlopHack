@@ -2,16 +2,16 @@
 
 BIN_DIR = bin
 
-LIB_CPP_SRCS = kernels.cc \
-							 particle.cc
+LIB_CPP_SRCS = src/kernels.cc \
+							 src/particle.cc
 
 LIB_SRCS = ${LIB_CPP_SRCS}
 
-BIN_SRCS = test_sph.cc
+BIN_SRCS = src/test_sph.cc
 
-LIB_OBJS = $(LIB_CPP_SRCS:%.cc=objs/%.o)
-BIN_OBJS = $(BIN_SRCS:%.cc=objs/%.o)
-BINS = $(BIN_SRCS:%.cc=bin/%)
+LIB_OBJS = $(LIB_CPP_SRCS:src/%.cc=objs/%.o)
+BIN_OBJS = $(BIN_SRCS:src/%.cc=objs/%.o)
+BINS = $(BIN_SRCS:src/%.cc=bin/%)
 
 OBJS = ${LIB_OBJS} ${BIN_OBJS}
 
@@ -46,11 +46,11 @@ ${BINS}: bin/%: objs/%.o ${LIB_OBJS}
 	${CPP} -o $@ $^ ${LDFLAGS}
 
 # These two rules get invoked by the include above.
-${DEPDIR}/%.d: %.cc
+${DEPDIR}/%.d: src/%.cc
 	@mkdir -p ${DEPDIR}/${*D}
 	@${MAKEDEPEND}
 
-objs/%.o: %.cc
+objs/%.o: src/%.cc
 	@mkdir -p objs
 	${CPP} -o $@ $< -c ${CPPFLAGS}
 
