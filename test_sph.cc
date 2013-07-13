@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cstdlib>
+#include <memory>
 
 #ifdef __APPLE__
 #include <OpenGL/OpenGL.h>
@@ -11,13 +12,20 @@
 #error "unsupported platform"
 #endif
 
+#include <google/profiler.h>
+
+#include "aabb.h"
+#include "math.h"
+#include "particle.h"
+
 static const double target_fps = 60.0;
 static const double ms_per_frame = 1000.0 / target_fps;
 
 bool paused;
+std::unique_ptr<SPHack::ParticleSystem> ps;
 
 void Tick() {
-  ;
+  ps->Step(1.0 / target_fps);
 }
 
 void TimedIdle(int flag) {
@@ -33,6 +41,17 @@ void TimedIdle(int flag) {
   glutTimerFunc(delay_ms > 0 ? delay_ms : 0, &TimedIdle, 0);
 }
 
+void DrawCircle(float center_x, float center_y, float radius) {
+  glPushMatrix();
+  glTranslatef(center_x, center_y, 0.0);
+  glBegin(GL_LINE_LOOP);
+  for (int i = 0; i < 16; ++i) {
+    glVertex2f(cos(i * (M_PI / 8.0))*radius, sin(i * (M_PI / 8.0))*radius); 
+  }
+  glEnd();
+  glPopMatrix();
+}
+
 void Reshape(int w, int h) {
   if (h == 0) {
     h = 1;
@@ -45,9 +64,9 @@ void Reshape(int w, int h) {
   glViewport(0, 0, w, h);
   //gluPerspective(45.0, ratio, 5.0, 1000.0);
   if (ratio < 1.0) {
-    gluOrtho2D(-1.1, 1.1, -1.1/ratio, 1.1/ratio);
+    gluOrtho2D(-0.1, 1.1, -0.1/ratio, 1.1/ratio);
   } else {
-    gluOrtho2D(-ratio*1.1, ratio*1.1, -1.1, 1.1);
+    gluOrtho2D(-ratio*0.1, ratio*1.1, -0.1, 1.1);
   }
   glMatrixMode(GL_MODELVIEW);
 }
@@ -57,17 +76,25 @@ void Render() {
   glClear(GL_COLOR_BUFFER_BIT);
   glColor3f(1.0, 1.0, 1.0);
   glBegin(GL_LINE_LOOP);
-    glVertex2f(-1.0, -1.0);
-    glVertex2f(-1.0,  1.0);
-    glVertex2f( 1.0,  1.0);
-    glVertex2f( 1.0, -1.0);
+    glVertex2f(0.0, 0.0);
+    glVertex2f(0.0,  1.0);
+    glVertex2f(1.0, 1.0);
+    glVertex2f(1.0, 0.0);
   glEnd();
+
+  for (int i = 0; i < ps->size(); ++i) {
+    if (ps->isActive(i)) {
+      DrawCircle(ps->pos(i)[0], ps->pos(i)[1], ps->radius(i));
+    }
+  }
+
   glutSwapBuffers();
 }
 
 void KeyDown(unsigned char key, int x, int y) {
   switch (key) {
     case 27:
+      ProfilerFlush();
       exit(0);
       break;
 
@@ -100,5 +127,9 @@ int main(int argc, char* argv[]) {
   glutMouseFunc(&MouseButton);
 
   glutTimerFunc(0, &TimedIdle, 0);
+
+  ps.reset(new SPHack::ParticleSystem(SPHack::AABB(SPHack::Vec2(0.0, 0.0), SPHack::Vec2(1.0, 1.0))));
+  ps->AddParticles(SPHack::AABB(SPHack::Vec2(0.0, 0.0), SPHack::Vec2(0.2, 0.5)), 0.02);
+
   glutMainLoop();
 }

@@ -2,7 +2,7 @@
 
 BIN_DIR = bin
 
-LIB_CPP_SRCS =
+LIB_CPP_SRCS = particle.cc
 
 LIB_SRCS = ${LIB_CPP_SRCS}
 
@@ -18,7 +18,7 @@ OBJS = ${LIB_OBJS} ${BIN_OBJS}
 # objects have .o extensions.
 DEP_SRC_OBJS = ${OBJS}
 
-DEBUG_FLAGS = -g2
+DEBUG_FLAGS = -g
 DEBUG_OPT_FLAGS = -g -O2 -ffast-math
 OPT_FLAGS = -O3 -ffast-math -DNDEBUG
 
@@ -35,13 +35,13 @@ ifneq (${MAKECMDGOALS},"clean")
 endif
 
 CPPFLAGS = -iquote . -I${EIGEN_INCLUDE} -Wall ${DEBUG_FLAGS} ${PLATFORM_CPPFLAGS} -std=c++11
-LDFLAGS =  -lpthread ${GL_LIB_FLAGS} ${PLATFORM_LDFLAGS}
+LDFLAGS =  -lpthread ${GL_LIB_FLAGS} ${PLATFORM_LDFLAGS} -lprofiler
 
 build.mk: find_prereqs.sh
 	./find_prereqs.sh > build.mk
 
-project_lib.a: ${LIB_OBJS}
-	${AR} $@ $^
+#project_lib.a: ${LIB_OBJS}
+#	${AR} $@ $^
 
 ${BINS}: bin/%: %.o ${LIB_OBJS}
 	@mkdir -p bin

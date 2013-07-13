@@ -5,15 +5,15 @@ if [ -e "build.mk.manual" ]; then
   exit
 fi
 
-if [ -e "/usr/local/include/eigen3" ]; then
-  echo "EIGEN_INCLUDE = /usr/local/include/eigen3"
-elif [ -e "/usr/include/eigen3" ]; then
-  echo "EIGEN_INCLUDE = /usr/include/eigen3"
-elif [ -e "${HOME}/opt/include/eigen3" ]; then
-  echo "EIGEN_INCLUDE = ${HOME}/opt/include/eigen3"
-else
-  echo '$(error Could not find /usr/local/include/eigen3 or /usr/include/eigen3)'
-fi
+#if [ -e "/usr/local/include/eigen3" ]; then
+#  echo "EIGEN_INCLUDE = /usr/local/include/eigen3"
+#elif [ -e "/usr/include/eigen3" ]; then
+#  echo "EIGEN_INCLUDE = /usr/include/eigen3"
+#elif [ -e "${HOME}/opt/include/eigen3" ]; then
+#  echo "EIGEN_INCLUDE = ${HOME}/opt/include/eigen3"
+#else
+#  echo '$(error Could not find /usr/local/include/eigen3 or /usr/include/eigen3)'
+#fi
 
 platform=$(uname -s)
 if [ ${platform} = "Darwin" ]; then
