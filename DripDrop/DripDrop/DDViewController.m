@@ -13,6 +13,7 @@
 #import "../ShaderTools/TTCSurface.h"
 #import "../ShaderTools/TTCQuad.h"
 
+#import "DDAudioPlayer.h"
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
@@ -60,7 +61,7 @@ static float phiShrinkFactor = 4.0;
     TTCSurface* _phiSurface;
     TTCSurface* _phiTempSurface;
     
-    
+    DDAudioPlayer* _audioPlayer;
 }
 @property (strong, nonatomic) EAGLContext *context;
 
@@ -96,6 +97,9 @@ static float phiShrinkFactor = 4.0;
     [_motionManager startDeviceMotionUpdatesUsingReferenceFrame:CMAttitudeReferenceFrameXArbitraryZVertical];
     
     [self setupGL];
+    
+    _audioPlayer = [[DDAudioPlayer alloc] init];
+    [_audioPlayer setupAudio];
 }
 
 - (void)dealloc
@@ -188,6 +192,10 @@ static float phiShrinkFactor = 4.0;
     // +y is left
     CMAcceleration g = _motionManager.deviceMotion.gravity;
     [_sph setGravity:CGPointMake(-g.y, g.x)];
+    
+    if ([_audioPlayer numClips] > 0) {
+        [_audioPlayer playClip:0];
+    }
 }
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect

@@ -60,6 +60,7 @@ public:
 	float Mean(const SInt64 whichChannel = 0);
 	float Max(const SInt64 whichChannel = 0);
 	float Min(const SInt64 whichChannel = 0);
+    float RMS(const SInt64 whichChannel = 0);
 	
 protected:
 	SInt64 mLastWrittenIndex[kMaxNumChannels];

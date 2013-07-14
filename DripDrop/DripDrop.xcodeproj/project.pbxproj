@@ -25,13 +25,12 @@
 		C9ED29A51792C1CE002CFF49 /* vblur.fsh in Sources */ = {isa = PBXBuildFile; fileRef = C9ED29A41792C1CE002CFF49 /* vblur.fsh */; };
 		C9ED29A61792C666002CFF49 /* hblur.fsh in Resources */ = {isa = PBXBuildFile; fileRef = C9ED29A21792C144002CFF49 /* hblur.fsh */; };
 		C9ED29A71792C666002CFF49 /* vblur.fsh in Resources */ = {isa = PBXBuildFile; fileRef = C9ED29A41792C1CE002CFF49 /* vblur.fsh */; };
-		C9ED29B117932C79002CFF49 /* AudioFileReader.mm in Sources */ = {isa = PBXBuildFile; fileRef = C9ED29AA17932C79002CFF49 /* AudioFileReader.mm */; };
-		C9ED29B217932C79002CFF49 /* AudioFileWriter.m in Sources */ = {isa = PBXBuildFile; fileRef = C9ED29AC17932C79002CFF49 /* AudioFileWriter.m */; };
 		C9ED29B317932C79002CFF49 /* Novocaine.m in Sources */ = {isa = PBXBuildFile; fileRef = C9ED29AE17932C79002CFF49 /* Novocaine.m */; };
 		C9ED29B417932C79002CFF49 /* RingBuffer.mm in Sources */ = {isa = PBXBuildFile; fileRef = C9ED29B017932C79002CFF49 /* RingBuffer.mm */; };
 		C9ED29B817932CA0002CFF49 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9ED29B517932CA0002CFF49 /* Accelerate.framework */; };
 		C9ED29B917932CA0002CFF49 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9ED29B617932CA0002CFF49 /* AudioToolbox.framework */; };
 		C9ED29BA17932CA0002CFF49 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9ED29B717932CA0002CFF49 /* AVFoundation.framework */; };
+		C9ED29BD17932D7C002CFF49 /* DDAudioPlayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = C9ED29BC17932D7C002CFF49 /* DDAudioPlayer.mm */; };
 		C9F5367C179213E30049391C /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9F5367B179213E30049391C /* UIKit.framework */; };
 		C9F5367E179213E30049391C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9F5367D179213E30049391C /* Foundation.framework */; };
 		C9F53680179213E30049391C /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9F5367F179213E30049391C /* CoreGraphics.framework */; };
@@ -118,10 +117,6 @@
 		C9ED299F1792B9EC002CFF49 /* phi.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = phi.fsh; sourceTree = "<group>"; };
 		C9ED29A21792C144002CFF49 /* hblur.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = hblur.fsh; sourceTree = "<group>"; };
 		C9ED29A41792C1CE002CFF49 /* vblur.fsh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; path = vblur.fsh; sourceTree = "<group>"; };
-		C9ED29A917932C79002CFF49 /* AudioFileReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AudioFileReader.h; sourceTree = "<group>"; };
-		C9ED29AA17932C79002CFF49 /* AudioFileReader.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AudioFileReader.mm; sourceTree = "<group>"; };
-		C9ED29AB17932C79002CFF49 /* AudioFileWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AudioFileWriter.h; sourceTree = "<group>"; };
-		C9ED29AC17932C79002CFF49 /* AudioFileWriter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AudioFileWriter.m; sourceTree = "<group>"; };
 		C9ED29AD17932C79002CFF49 /* Novocaine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Novocaine.h; sourceTree = "<group>"; };
 		C9ED29AE17932C79002CFF49 /* Novocaine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Novocaine.m; sourceTree = "<group>"; };
 		C9ED29AF17932C79002CFF49 /* RingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RingBuffer.h; sourceTree = "<group>"; };
@@ -129,6 +124,8 @@
 		C9ED29B517932CA0002CFF49 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		C9ED29B617932CA0002CFF49 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		C9ED29B717932CA0002CFF49 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		C9ED29BB17932D7C002CFF49 /* DDAudioPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDAudioPlayer.h; sourceTree = "<group>"; };
+		C9ED29BC17932D7C002CFF49 /* DDAudioPlayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DDAudioPlayer.mm; sourceTree = "<group>"; };
 		C9F53678179213E30049391C /* DripDrop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DripDrop.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9F5367B179213E30049391C /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		C9F5367D179213E30049391C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -244,10 +241,6 @@
 		C9ED29A817932C79002CFF49 /* Novocaine */ = {
 			isa = PBXGroup;
 			children = (
-				C9ED29A917932C79002CFF49 /* AudioFileReader.h */,
-				C9ED29AA17932C79002CFF49 /* AudioFileReader.mm */,
-				C9ED29AB17932C79002CFF49 /* AudioFileWriter.h */,
-				C9ED29AC17932C79002CFF49 /* AudioFileWriter.m */,
 				C9ED29AD17932C79002CFF49 /* Novocaine.h */,
 				C9ED29AE17932C79002CFF49 /* Novocaine.m */,
 				C9ED29AF17932C79002CFF49 /* RingBuffer.h */,
@@ -316,6 +309,8 @@
 				C9F5369E179213E30049391C /* DDViewController.h */,
 				C9F5369F179213E30049391C /* DDViewController.m */,
 				C9F53686179213E30049391C /* Supporting Files */,
+				C9ED29BB17932D7C002CFF49 /* DDAudioPlayer.h */,
+				C9ED29BC17932D7C002CFF49 /* DDAudioPlayer.mm */,
 			);
 			path = DripDrop;
 			sourceTree = "<group>";
@@ -597,10 +592,9 @@
 				C9ED29A01792B9EC002CFF49 /* phi.fsh in Sources */,
 				C9ED29A31792C144002CFF49 /* hblur.fsh in Sources */,
 				C9ED29A51792C1CE002CFF49 /* vblur.fsh in Sources */,
-				C9ED29B117932C79002CFF49 /* AudioFileReader.mm in Sources */,
-				C9ED29B217932C79002CFF49 /* AudioFileWriter.m in Sources */,
 				C9ED29B317932C79002CFF49 /* Novocaine.m in Sources */,
 				C9ED29B417932C79002CFF49 /* RingBuffer.mm in Sources */,
+				C9ED29BD17932D7C002CFF49 /* DDAudioPlayer.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

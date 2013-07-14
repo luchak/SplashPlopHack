@@ -283,6 +283,13 @@ float RingBuffer::Min(const SInt64 whichChannel)
 	return min;	
 }
 
+float RingBuffer::RMS(const SInt64 whichChannel)
+{
+	float rms;
+	vDSP_rmsqv(mData[whichChannel],1,&rms,mSizeOfBuffer);
+	return rms;
+}
+
 
 void RingBuffer::Clear()
 {
