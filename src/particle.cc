@@ -18,7 +18,7 @@ ParticleSystem::ParticleSystem(const AABB& bounds, Real radius) : bounds_(bounds
   grid_width_ = static_cast<int>(ceil(bounds.width() / grid_delta_));
   grid_height_ = static_cast<int>(ceil(bounds.height() / grid_delta_));
   grid_.resize(grid_width_*grid_height_);
-  static const int estimated_particles_per_cell = 32;
+  static const int estimated_particles_per_cell = 8;
   for (auto& grid_cell : grid_) {
     grid_cell.reserve(estimated_particles_per_cell);
   }
@@ -40,8 +40,8 @@ void ParticleSystem::AddParticles(const AABB& region) {
   AABB clipped_region = bounds_.Intersect(region);
 
   int particles_added = 0;
-  for (Real x = clipped_region.min()[0] + boundary_margin_; x < clipped_region.max()[0] - boundary_margin_; x += 0.58*radius_) {
-    for (Real y = clipped_region.min()[1] + boundary_margin_; y < clipped_region.max()[1] - boundary_margin_; y += 0.58*radius_) {
+  for (Real x = clipped_region.min()[0] + boundary_margin_; x < clipped_region.max()[0] - boundary_margin_; x += 0.6*radius_) {
+    for (Real y = clipped_region.min()[1] + boundary_margin_; y < clipped_region.max()[1] - boundary_margin_; y += 0.6*radius_) {
       if (!CreateParticle(Vec2(x, y), Vec2(0.0, 0.0))) {
         std::cerr << "Failed to create particle at: " << x << " " << y << std::endl;
       } else {
@@ -110,7 +110,7 @@ void ParticleSystem::InitDensity() {
   }
 
   density_inv_ /= max_density;
-  cfm_epsilon_ = 0.02 / density_inv_;
+  cfm_epsilon_ = 0.03 / density_inv_;
   std::cerr << "density: " << (1.0 / density_inv_) << std::endl;
   std::cerr << "cfm eps: " << cfm_epsilon_ << std::endl;
 }

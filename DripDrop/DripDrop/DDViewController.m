@@ -85,7 +85,7 @@ static float phiShrinkFactor = 4.0;
     GLKView *view = (GLKView *)self.view;
     view.context = self.context;
     
-    _sph = [[SplashPlopHack alloc] initWithBounds:CGRectMake(0.0, 0.0, 1.0, 1.0) radius:0.025];
+    _sph = [[SplashPlopHack alloc] initWithBounds:CGRectMake(0.0, 0.0, 1.0, 1.0) radius:0.027];
     [_sph addParticlesInRect:CGRectMake(0.0, 0.0, 0.5, 0.5)];
     [_sph initDensity];
     

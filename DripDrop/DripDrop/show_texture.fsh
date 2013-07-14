@@ -34,7 +34,7 @@ void main() {
 //    color /= 16.0;
     
     if (color.r < 0.0) {
-        gl_FragColor = mix(vec4(0.4, 0.4, 1.0, 1.0), vec4(1.0, 1.0, 1.0, 0.0), 1.0-pow(16.0*abs(color.r), 3.0));
+        gl_FragColor = mix(vec4(0.4, 0.4, 1.0, 1.0), vec4(1.0, 1.0, 1.0, 0.0), 1.0-pow(16.0*abs(color.r), 2.0));
     } else {
         discard;
     }
