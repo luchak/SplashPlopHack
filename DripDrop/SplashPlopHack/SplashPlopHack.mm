@@ -39,6 +39,13 @@
     _particles->AddParticles(aabb);
 }
 
+- (void) addParticlesInRect:(CGRect)rect maxParticles:(int)max {
+    SPHack::AABB aabb(SPHack::Vec2(rect.origin.x, rect.origin.y),
+                      SPHack::Vec2(rect.origin.x + rect.size.width, rect.origin.y + rect.size.height));
+    _particles->AddParticles(aabb, max);
+}
+
+
 - (void) step:(CGFloat)dt {
     _particles->Step(dt);
 }
@@ -76,6 +83,14 @@
 
 - (void) setGravity:(CGPoint)g {
     _particles->setGravity(SPHack::Vec2(g.x, g.y));
+}
+
+- (void) clear {
+    _particles->Clear();
+}
+
+- (CGFloat) accelMagnitude:(int)pid {
+    return _particles->accelMagnitude(pid);
 }
 
 

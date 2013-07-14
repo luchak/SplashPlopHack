@@ -33,7 +33,7 @@ class ParticleSystem {
  public:
   ParticleSystem(const AABB& bounds, Real radius);
 
-  void AddParticles(const AABB& region);
+  void AddParticles(const AABB& region, int max=-1);
 
   void Step(Real dt);
 
@@ -44,10 +44,13 @@ class ParticleSystem {
   int size() const { return kMaxParticles; }
   const AABB& bounds() const { return bounds_; }
   Real density(ParticleIDType pid) const { return density_[pid]; }
+  Real accelMagnitude(ParticleIDType pid) const { return accel_[pid].norm(); }
 
   void setGravity(const Vec2& gravity) { gravity_ = gravity; }
 
   void InitDensity();
+
+  void Clear();
 
  private:
   bool CreateParticle(const Vec2& pos, const Vec2& vel);
@@ -79,6 +82,7 @@ class ParticleSystem {
   std::array<Vec2, kMaxParticles> predicted_pos_;
   std::array<Vec2, kMaxParticles> vel_;
   std::array<Real, kMaxParticles> density_;
+  std::array<Vec2, kMaxParticles> accel_;
   std::array<ParticleFlagType, kMaxParticles> flag_;
   std::vector<ParticleIDType> available_particles_;
 

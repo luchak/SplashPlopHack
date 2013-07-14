@@ -13,6 +13,7 @@
 
 - (id) initWithBounds:(CGRect)rect radius:(CGFloat)radius;
 - (void) addParticlesInRect:(CGRect)rect;
+- (void) addParticlesInRect:(CGRect)rect maxParticles:(int)max;
 - (void) step:(CGFloat)dt;
 - (BOOL) isActive:(int)pid;
 - (CGPoint) pos:(int)pid;
@@ -22,5 +23,7 @@
 - (CGFloat) density:(int)pid;
 - (void) initDensity;
 - (void) setGravity:(CGPoint)g;
+- (void) clear;
+- (CGFloat) accelMagnitude:(int)pid;
 
 @end

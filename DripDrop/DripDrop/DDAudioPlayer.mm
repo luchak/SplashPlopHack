@@ -23,7 +23,7 @@
 @end
 
 static const int cliplength = 4410;
-static const float thresh = 0.4;
+static const float thresh = 0.04;
 
 @implementation DDAudioPlayer
 
@@ -41,26 +41,29 @@ static const float thresh = 0.4;
 }
 
 - (void) setupAudio {
-    _ringBuffer = new RingBuffer(5120, 2);
+    _ringBuffer = new RingBuffer(5000, 2);
     _ringBuffer->Clear();
     _audioManager = [Novocaine audioManager];
     
     __weak typeof(self) weakSelf = self;
     [_audioManager setInputBlock:^(float *newAudio, UInt32 numSamples, UInt32 numChannels) {
         typeof(self) strongSelf = weakSelf;
+        if (strongSelf->_clips.size() > 100) {
+            return;
+        }
         RingBuffer* rb = strongSelf->_ringBuffer;
-        rb->AddNewInterleavedFloatData(newAudio, numSamples, numChannels);
-        if ((rb->NumUnreadFrames() >= cliplength) && (rb->Max() > thresh)) {
+        rb->AddNewFloatData(newAudio, numSamples, 0);
+        if ((rb->NumUnreadFrames() >= cliplength) && (rb->RMS() > thresh)) {
             std::vector<float> clip;
-            clip.resize(cliplength*numChannels);
-            rb->FetchInterleavedData(&(clip[0]), cliplength, numChannels);
-//            for (int i = 0; i < 16; i++) {
-//                float frac = (1.0+i) * (1.0 / 17.0);
-//                clip[2*i] *= frac;
-//                clip[2*i+1] *= frac;
-//                clip[clip.size() - 2*i - 1] *= frac;
-//                clip[clip.size() - 2*i - 2] *= frac;
-//            }
+            clip.resize(cliplength);
+            rb->FetchData(&(clip[0]), cliplength, 0, 1);
+            for (int i = 0; i < 400; i++) {
+                float frac = (1.0+i) * (1.0 / 1001.0);
+                clip[2*i] *= frac;
+                clip[2*i+1] *= frac;
+                clip[clip.size() - 2*i - 1] *= frac;
+                clip[clip.size() - 2*i - 2] *= frac;
+            }
             strongSelf->_clips.push_back(clip);
             strongSelf->_playing.push_back(0);
         }
@@ -74,12 +77,12 @@ static const float thresh = 0.4;
             audioToPlay[j] = 0.0;
         }
         for (int i = 0; i < playing.size(); ++i) {
-            for (int j = 0; j < numSamples * numChannels; ++j) {
+            for (int j = 0; j < numSamples; ++j) {
                 if (playing[i] <= 0) {
                     playing[i] = 0; // no time to debug
                     break;
                 }
-                audioToPlay[j] += (clips[i][clips[i].size() - (playing[i]--)])*0.2;
+                audioToPlay[j*numChannels] += (clips[i][clips[i].size() - (playing[i]--)])*0.2;
             }
         }
     }];

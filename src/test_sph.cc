@@ -186,6 +186,8 @@ int main(int argc, char* argv[]) {
           0.016));
   ps->AddParticles(SPHack::AABB(SPHack::Vec2(0.0, 0.0), SPHack::Vec2(0.3, 0.7)));
   ps->InitDensity();
+  ps->Clear();
+  ps->AddParticles(SPHack::AABB(SPHack::Vec2(0.0, 0.0), SPHack::Vec2(0.3, 0.7)));
 
   Reshape(window_w, window_h);
   selected_particle = -1;

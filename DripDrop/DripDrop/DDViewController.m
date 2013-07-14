@@ -86,9 +86,9 @@ static float phiShrinkFactor = 4.0;
     GLKView *view = (GLKView *)self.view;
     view.context = self.context;
     
-    _sph = [[SplashPlopHack alloc] initWithBounds:CGRectMake(0.0, 0.0, 1.0, 1.0) radius:0.027];
+    _sph = [[SplashPlopHack alloc] initWithBounds:CGRectMake(0.0, 0.0, 1.0, 1.0) radius:0.03];
     [_sph addParticlesInRect:CGRectMake(0.0, 0.0, 0.5, 0.5)];
-    [_sph initDensity];
+    [_sph clear];
     
     _pos = malloc(sizeof(GLfloat)*2*[_sph size]);
     _num_active = 0;
@@ -171,6 +171,8 @@ static float phiShrinkFactor = 4.0;
 
 #pragma mark - GLKView and GLKViewController delegate methods
 
+static float accelThresh = 10.0;
+static int pps = 16;
 - (void)update
 {
     float aspect = fabsf(self.view.bounds.size.width / self.view.bounds.size.height);
@@ -185,6 +187,9 @@ static float phiShrinkFactor = 4.0;
             _pos[_num_active*2] = ppos.x;
             _pos[_num_active*2+1] = ppos.y;
             _num_active++;
+            if (((i % pps) < 2) && [_sph accelMagnitude:i] > accelThresh) {
+                [_audioPlayer playClip:(i/pps)];
+            }
         }
     }
     
@@ -193,8 +198,12 @@ static float phiShrinkFactor = 4.0;
     CMAcceleration g = _motionManager.deviceMotion.gravity;
     [_sph setGravity:CGPointMake(-g.y, g.x)];
     
-    if ([_audioPlayer numClips] > 0) {
-        [_audioPlayer playClip:0];
+    int toAdd = [_audioPlayer numClips]*pps - _num_active;
+    if (_num_active + toAdd > 800) {
+        toAdd = 800 - _num_active;
+    }
+    if (toAdd > 0) {
+        [_sph addParticlesInRect:CGRectMake(0.4, 0.4, 0.2, 0.2) maxParticles:toAdd];
     }
 }
 

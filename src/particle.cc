@@ -36,12 +36,15 @@ ParticleSystem::ParticleSystem(const AABB& bounds, Real radius) : bounds_(bounds
   jitter_dist_ = std::uniform_real_distribution<>(-1e-6, 1e-6);
 }
 
-void ParticleSystem::AddParticles(const AABB& region) {
+void ParticleSystem::AddParticles(const AABB& region, int max) {
   AABB clipped_region = bounds_.Intersect(region);
 
   int particles_added = 0;
   for (Real x = clipped_region.min()[0] + boundary_margin_; x < clipped_region.max()[0] - boundary_margin_; x += 0.6*radius_) {
     for (Real y = clipped_region.min()[1] + boundary_margin_; y < clipped_region.max()[1] - boundary_margin_; y += 0.6*radius_) {
+      if (max >= 0 && particles_added >= max) {
+        continue;
+      }
       if (!CreateParticle(Vec2(x, y), Vec2(0.0, 0.0))) {
         std::cerr << "Failed to create particle at: " << x << " " << y << std::endl;
       } else {
@@ -66,7 +69,9 @@ void ParticleSystem::PredictPositions(Real dt) {
 
 void ParticleSystem::UpdateVelocities(Real dt) {
   for (size_t i = 0; i < size(); ++i) {
+    Vec2 old_vel = vel_[i];
     vel_[i] = (predicted_pos_[i] - pos_[i]) * (1.0 / dt);
+    accel_[i] += (vel_[i] - old_vel) / dt;
   }
 }
 
@@ -77,6 +82,11 @@ void ParticleSystem::CommitPositions() {
 void ParticleSystem::Step(Real dt) {
   static const int kSubsteps = 2;
   dt /= kSubsteps;
+
+  for (size_t i = 0; i < size(); ++i) {
+    accel_[i] = Vec2(0.0, 0.0);
+  }
+
   for (int substep = 0; substep < kSubsteps; ++substep) {
     ApplyForces(dt);
     PredictPositions(dt);
@@ -115,6 +125,14 @@ void ParticleSystem::InitDensity() {
   std::cerr << "cfm eps: " << cfm_epsilon_ << std::endl;
 }
 
+void ParticleSystem::Clear() {
+  available_particles_.clear();
+  for (int i = kMaxParticles - 1; i >= 0; --i) {
+    available_particles_.push_back(i);
+    flag_[i] = 0;
+  }
+}
+
 bool ParticleSystem::CreateParticle(const Vec2& pos, const Vec2& vel) {
   if (available_particles_.empty()) {
     return false;
@@ -124,6 +142,7 @@ bool ParticleSystem::CreateParticle(const Vec2& pos, const Vec2& vel) {
   available_particles_.pop_back();
   pos_[id] = pos;
   vel_[id] = vel;
+  accel_[id] = Vec2();
   flag_[id] = PARTICLE_FLAG_ACTIVE;
 
   return true;
