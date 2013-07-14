@@ -83,6 +83,7 @@ void ParticleSystem::Step(Real dt) {
     BuildGrid();
     static const int kIters = 4;
     for (int i = 0; i < kIters; ++i) {
+      SubstepResetGrid();
       CalculateLambdaOnGrid();
       CalculatePressureDeltaOnGrid();
       ApplyPressureDeltaOnGrid();
@@ -144,75 +145,99 @@ void ParticleSystem::BuildGrid() {
           PressureParticle {
               predicted_pos_[i],
               Vec2(0.0, 0.0),
-              0.0,
               static_cast<ParticleIDType>(i)
           });
     }
   }
 }
 
-Real ParticleSystem::CalculateParticleLambda(const PressureParticle& pi, int x, int y) {
-  Real density_i = 0.0;
-  Real cj_grad_norm_squared_sum = 0.0;
-  Vec2 ci_grad_sum(0.0, 0.0);
-  for (int dx = -1; dx <= 1; ++dx) {
-    const int nx = x + dx;
-    if (nx < 0) continue;
-    if (nx >= grid_width_) continue;
-    for (int dy = -1; dy <= 1; ++dy) {
-      const int ny = y + dy;
-      if (ny < 0) continue;
-      if (ny >= grid_width_) continue;
-      for (auto& pj : grid_[CellID(nx, ny)]) {
-        if (pi.id == pj.id) continue;
-        const Vec2 r = pi.pos - pj.pos;
-        if (r.squaredNorm() > radius2_) continue;
-        density_i += kernel_.Poly6(r);
-        const Vec2 grad = kernel_.SpikyGrad(r);
-        cj_grad_norm_squared_sum += grad.squaredNorm();
-        ci_grad_sum += grad;
+void ParticleSystem::SubstepResetGrid() {
+  for (int ox = 0; ox < grid_width_; ++ox) {
+    for (int oy = 0; oy < grid_height_; ++oy) {
+      int cell_i = CellID(ox, oy);
+      for (int i = 0; i < grid_[cell_i].size(); ++i) {
+        PressureParticle& pi = grid_[cell_i][i];
+        pi.lambda = 0.0;
+        pi.density = 0.0;
+        pi.cj_grad_norm_squared_sum = 0.0;
+        pi.ci_grad_sum = Vec2(0.0, 0.0);
+        pi.pos_delta = Vec2(0.0, 0.0);
       }
     }
   }
+}
 
-  density_[pi.id] = density_i * density_inv_;
-  const Real den = (cj_grad_norm_squared_sum + ci_grad_sum.squaredNorm())*density_inv_*density_inv_ + cfm_epsilon_;
-  return -((density_i * density_inv_) - 1.0) / den;
+void ParticleSystem::AccumulateLambdaData(PressureParticle& pi, PressureParticle& pj) {
+  const Vec2 r = pi.pos - pj.pos;
+  if (r.squaredNorm() > radius2_) return;
+  const Real poly6_weight = kernel_.Poly6NonNorm(r);
+  pi.density += poly6_weight;
+  pj.density += poly6_weight;
+  const Vec2 grad = kernel_.SpikyGradNonNorm(r);
+  const Real gradSquaredNorm = grad.squaredNorm();
+  pi.cj_grad_norm_squared_sum += gradSquaredNorm;
+  pj.cj_grad_norm_squared_sum += gradSquaredNorm;
+  pi.ci_grad_sum += grad;
+  pj.ci_grad_sum -= grad;
 }
 
 void ParticleSystem::CalculateLambdaOnGrid() {
   for (int ox = 0; ox < grid_width_; ++ox) {
     for (int oy = 0; oy < grid_height_; ++oy) {
-      for (auto& pi : grid_[CellID(ox, oy)]) {
-        pi.lambda = CalculateParticleLambda(pi, ox, oy);
+      int cell_i = CellID(ox, oy);
+      for (int i = 0; i < grid_[cell_i].size(); ++i) {
+        PressureParticle& pi = grid_[cell_i][i];
+
+        for (int j = i+1; j < grid_[cell_i].size(); ++j) {
+          PressureParticle& pj = grid_[cell_i][j];
+          AccumulateLambdaData(pi, pj);
+        }
+      }
+
+      for (int dx = 0; dx <= 1; ++dx) {
+        const int nx = ox + dx;
+        if (nx >= grid_width_) continue;
+        for (int dy = ((dx == 0) ? 1 : -1); dy <= 1; ++dy) {
+          const int ny = oy + dy;
+          if (ny < 0) continue;
+          if (ny >= grid_width_) continue;
+
+          int cell_j = CellID(nx, ny);
+
+          for (int i = 0; i < grid_[cell_i].size(); ++i) {
+            PressureParticle& pi = grid_[cell_i][i];
+            for (int j = 0; j < grid_[cell_j].size(); ++j) {
+              PressureParticle& pj = grid_[cell_j][j];
+              AccumulateLambdaData(pi, pj);
+            }
+          }
+        }
+      }
+
+      for (int i = 0; i < grid_[cell_i].size(); ++i) {
+        PressureParticle& pi = grid_[cell_i][i];
+
+        pi.density *= density_inv_ * kernel_.poly6_norm();
+        density_[pi.id] = pi.density;
+        const Real den = (pi.cj_grad_norm_squared_sum*kernel_.spiky_grad_norm()*kernel_.spiky_grad_norm() + (pi.ci_grad_sum * kernel_.spiky_grad_norm()).squaredNorm())*density_inv_*density_inv_ + cfm_epsilon_;
+        pi.lambda = -(pi.density - 1.0) / den;
       }
     }
   }
 }
 
 void ParticleSystem::AccumulatePressureDelta(PressureParticle& pi, PressureParticle& pj) {
-  assert(pi.id != pj.id);
   const Vec2 r = pi.pos - pj.pos;
   if (r.squaredNorm() > radius2_) return;
-  Real scorr = kernel_.Poly6(r)/kernel_.Poly6(Vec2(0.0,0.2*radius_));
+  Real scorr = kernel_.Poly6NonNorm(r)/kernel_.Poly6NonNorm(Vec2(0.0,0.2*radius_));
   scorr = scorr*scorr*scorr*scorr;
-  scorr *= -0.000008;
-  const Vec2 delta = (pi.lambda + pj.lambda + scorr) * kernel_.SpikyGrad(r);
+  scorr *= -0.000005;
+  const Vec2 delta = (pi.lambda + pj.lambda + scorr) * kernel_.SpikyGradNonNorm(r);
   pi.pos_delta += delta;
   pj.pos_delta -= delta;
 }
 
 void ParticleSystem::CalculatePressureDeltaOnGrid() {
-  for (int ox = 0; ox < grid_width_; ++ox) {
-    for (int oy = 0; oy < grid_height_; ++oy) {
-      int cell_i = CellID(ox, oy);
-      for (int i = 0; i < grid_[cell_i].size(); ++i) {
-        PressureParticle& pi = grid_[cell_i][i];
-        pi.pos_delta = Vec2(0.0, 0.0);
-      }
-    }
-  }
-
   for (int ox = 0; ox < grid_width_; ++ox) {
     for (int oy = 0; oy < grid_height_; ++oy) {
       int cell_i = CellID(ox, oy);
@@ -247,7 +272,7 @@ void ParticleSystem::CalculatePressureDeltaOnGrid() {
 
       for (int i = 0; i < grid_[cell_i].size(); ++i) {
         PressureParticle& pi = grid_[cell_i][i];
-        pi.pos_delta *= density_inv_;
+        pi.pos_delta *= density_inv_ * kernel_.spiky_grad_norm();
       }
     }
   }

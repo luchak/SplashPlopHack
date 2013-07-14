@@ -21,9 +21,12 @@ struct PressureParticle {
   Vec2 pos;
   Vec2 pos_delta;
 
-  Real lambda;
-
   ParticleIDType id;
+
+  Real lambda;
+  Real density;
+  Real cj_grad_norm_squared_sum;
+  Vec2 ci_grad_sum;
 };
 
 class ParticleSystem {
@@ -55,9 +58,9 @@ class ParticleSystem {
   void CommitPositions();
 
   void BuildGrid();
-  Real CalculateParticleLambda(const PressureParticle& pi, int x, int y);
+  void SubstepResetGrid();
+  void AccumulateLambdaData(PressureParticle& pi, PressureParticle& pj);
   void CalculateLambdaOnGrid();
-  Vec2 CalculateParticlePressureDelta(const PressureParticle& pj, int x, int y);
   void AccumulatePressureDelta(PressureParticle& pi, PressureParticle& pj);
   void CalculatePressureDeltaOnGrid();
   void ApplyPressureDeltaOnGrid();
