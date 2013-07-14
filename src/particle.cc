@@ -30,6 +30,9 @@ ParticleSystem::ParticleSystem(const AABB& bounds, Real radius) : bounds_(bounds
   kernel_ = KernelEvaluator(radius_);
   
   boundary_margin_ = radius_ * 0.5;
+
+  random_.seed(144438);
+  jitter_dist_ = std::uniform_real_distribution<>(-1e-6, 1e-6);
 }
 
 void ParticleSystem::AddParticles(const AABB& region) {
@@ -181,7 +184,6 @@ void ParticleSystem::CalculateLambdaOnGrid() {
     for (int oy = 0; oy < grid_height_; ++oy) {
       for (auto& pi : grid_[CellID(ox, oy)]) {
         pi.lambda = CalculateParticleLambda(pi, ox, oy);
-        assert(pi.lambda >= 0.0 || pi.lambda < 0.0);
       }
     }
   }
@@ -235,7 +237,11 @@ void ParticleSystem::EnforceBoundariesOnGrid() {
   AABB shrunk_bounds = bounds_.Shrink(boundary_margin_);
   for (auto& grid_cell : grid_) {
     for (auto& particle : grid_cell) {
-      particle.pos = shrunk_bounds.Clip(particle.pos);
+      if (!shrunk_bounds.IsInside(particle.pos)) {
+        particle.pos = shrunk_bounds.Clip(particle.pos);
+        particle.pos.x += jitter_dist_(random_);
+        particle.pos.y += jitter_dist_(random_);
+      }
     }
   }
 }

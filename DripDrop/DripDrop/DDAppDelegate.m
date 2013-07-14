@@ -8,6 +8,11 @@
 
 #import "DDAppDelegate.h"
 
+@interface DDAppDelegate () {
+    CMMotionManager *_motionManager;
+}
+@end
+
 @implementation DDAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
@@ -41,6 +46,15 @@
 - (void)applicationWillTerminate:(UIApplication *)application
 {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+}
+
+- (CMMotionManager *)motionManager
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _motionManager = [[CMMotionManager alloc] init];
+    });
+    return _motionManager;
 }
 
 @end

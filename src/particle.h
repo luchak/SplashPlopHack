@@ -3,6 +3,7 @@
 
 #include <array>
 #include <memory>
+#include <random>
 #include <vector>
 
 #include "aabb.h"
@@ -40,6 +41,8 @@ class ParticleSystem {
   int size() const { return kMaxParticles; }
   const AABB& bounds() const { return bounds_; }
   Real density(ParticleIDType pid) const { return density_[pid]; }
+
+  void setGravity(const Vec2& gravity) { gravity_ = gravity; }
 
   void InitDensity();
 
@@ -86,6 +89,9 @@ class ParticleSystem {
   Vec2 gravity_;
 
   Real boundary_margin_;
+
+  std::mt19937 random_;
+  std::uniform_real_distribution<> jitter_dist_;
 };
   
 }  // namespace SPHack

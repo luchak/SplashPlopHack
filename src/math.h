@@ -1,7 +1,6 @@
 #ifndef MATH_H_
 #define MATH_H_
 
-#include <cassert>
 #include <cmath>
 #include <iostream>
 #include <ostream>

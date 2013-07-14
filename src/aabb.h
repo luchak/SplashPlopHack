@@ -32,8 +32,8 @@ class AABB {
   }
 
   inline bool IsInside(const Vec2& point) const {
-    bool x_inside = (min_[0] <= point[0]) && (max_[1] > point[0]);
-    bool y_inside = (min_[0] <= point[1]) && (max_[1] > point[1]);
+    bool x_inside = (min_[0] <= point[0]) && (max_[1] >= point[0]);
+    bool y_inside = (min_[0] <= point[1]) && (max_[1] >= point[1]);
     return x_inside && y_inside;
   }
 

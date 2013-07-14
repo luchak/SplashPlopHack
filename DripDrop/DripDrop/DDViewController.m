@@ -6,6 +6,7 @@
 //  Copyright (c) 2013 Matt Stanton. All rights reserved.
 //
 
+#import "DDAppdelegate.h"
 #import "DDViewController.h"
 #import <SplashPlopHack/SplashPlopHack.h>
 
@@ -42,6 +43,8 @@ enum
     SplashPlopHack* _sph;
     GLfloat* _pos;
     int _num_active;
+    
+    CMMotionManager* _motionManager;
 }
 @property (strong, nonatomic) EAGLContext *context;
 
@@ -65,7 +68,7 @@ enum
     if (!self.context) {
         NSLog(@"Failed to create ES context");
     }
-    [self setPreferredFramesPerSecond:60];
+    [self setPreferredFramesPerSecond:30];
     
     GLKView *view = (GLKView *)self.view;
     view.context = self.context;
@@ -77,6 +80,9 @@ enum
     
     _pos = malloc(sizeof(GLfloat)*2*[_sph size]);
     _num_active = 0;
+
+    _motionManager = [(DDAppDelegate*)[UIApplication sharedApplication].delegate motionManager];
+    [_motionManager startDeviceMotionUpdatesUsingReferenceFrame:CMAttitudeReferenceFrameXArbitraryZVertical];
     
     [self setupGL];
 }
@@ -144,7 +150,7 @@ enum
     
     _modelViewProjectionMatrix = GLKMatrix4Multiply(projectionMatrix, baseModelViewMatrix);
 
-    [_sph step:1.0/60.0];
+    [_sph step:1.0/30.0];
     
     _num_active = 0;
     for (int i = 0; i < [_sph size]; i++) {
@@ -155,6 +161,11 @@ enum
             _num_active++;
         }
     }
+    
+    // -x is down
+    // +y is left
+    CMAcceleration g = _motionManager.deviceMotion.gravity;
+    [_sph setGravity:CGPointMake(-g.y, g.x)];
 }
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
@@ -167,7 +178,7 @@ enum
     
     glUniformMatrix4fv(uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX], 1, 0, _modelViewProjectionMatrix.m);
     glUniform2f(uniforms[UNIFORM_WINDOW_SIZE], self.view.bounds.size.width, self.view.bounds.size.height);
-    glUniform1f(uniforms[UNIFORM_PARTICLE_RADIUS], [_sph radius]);
+    glUniform1f(uniforms[UNIFORM_PARTICLE_RADIUS], [_sph radius]*0.33);
     
     glEnableVertexAttribArray(GLKVertexAttribPosition);
     glVertexAttribPointer(GLKVertexAttribPosition, 2, GL_FLOAT, GL_FALSE, 0, _pos);

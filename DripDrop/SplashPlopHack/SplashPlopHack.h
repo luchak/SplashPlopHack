@@ -21,5 +21,6 @@
 - (CGRect) bounds;
 - (CGFloat) density:(int)pid;
 - (void) initDensity;
+- (void) setGravity:(CGPoint)g;
 
 @end

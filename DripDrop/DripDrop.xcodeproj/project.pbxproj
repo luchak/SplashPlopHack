@@ -10,6 +10,7 @@
 		C9B1CCFB179227AA008F177B /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9F5367F179213E30049391C /* CoreGraphics.framework */; };
 		C9B1CCFC1792284D008F177B /* libSplashPlopHack.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C9F536D01792152E0049391C /* libSplashPlopHack.a */; };
 		C9B1CD0417922BD8008F177B /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9B1CD0317922BD7008F177B /* libc++.dylib */; };
+		C9B1CD0617926EDF008F177B /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9B1CD0517926EDF008F177B /* CoreMotion.framework */; };
 		C9F5367C179213E30049391C /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9F5367B179213E30049391C /* UIKit.framework */; };
 		C9F5367E179213E30049391C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9F5367D179213E30049391C /* Foundation.framework */; };
 		C9F53680179213E30049391C /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9F5367F179213E30049391C /* CoreGraphics.framework */; };
@@ -82,6 +83,7 @@
 
 /* Begin PBXFileReference section */
 		C9B1CD0317922BD7008F177B /* libc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libc++.dylib"; path = "usr/lib/libc++.dylib"; sourceTree = SDKROOT; };
+		C9B1CD0517926EDF008F177B /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
 		C9F53678179213E30049391C /* DripDrop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DripDrop.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9F5367B179213E30049391C /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		C9F5367D179213E30049391C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -132,6 +134,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C9B1CD0617926EDF008F177B /* CoreMotion.framework in Frameworks */,
 				C9B1CD0417922BD8008F177B /* libc++.dylib in Frameworks */,
 				C9B1CCFC1792284D008F177B /* libSplashPlopHack.a in Frameworks */,
 				C9F5367C179213E30049391C /* UIKit.framework in Frameworks */,
@@ -202,6 +205,7 @@
 		C9F5367A179213E30049391C /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				C9B1CD0517926EDF008F177B /* CoreMotion.framework */,
 				C9B1CD0317922BD7008F177B /* libc++.dylib */,
 				C9F5367B179213E30049391C /* UIKit.framework */,
 				C9F5367D179213E30049391C /* Foundation.framework */,

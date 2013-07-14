@@ -74,4 +74,9 @@
     _particles->InitDensity();
 }
 
+- (void) setGravity:(CGPoint)g {
+    _particles->setGravity(SPHack::Vec2(g.x, g.y));
+}
+
+
 @end
