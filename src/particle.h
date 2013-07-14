@@ -58,6 +58,7 @@ class ParticleSystem {
   Real CalculateParticleLambda(const PressureParticle& pi, int x, int y);
   void CalculateLambdaOnGrid();
   Vec2 CalculateParticlePressureDelta(const PressureParticle& pj, int x, int y);
+  void AccumulatePressureDelta(PressureParticle& pi, PressureParticle& pj);
   void CalculatePressureDeltaOnGrid();
   void ApplyPressureDeltaOnGrid();
   void EnforceBoundariesOnGrid();

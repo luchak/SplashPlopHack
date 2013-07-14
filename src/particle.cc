@@ -1,6 +1,7 @@
 #include "particle.h"
 
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 
 namespace SPHack {
@@ -189,35 +190,64 @@ void ParticleSystem::CalculateLambdaOnGrid() {
   }
 }
 
-Vec2 ParticleSystem::CalculateParticlePressureDelta(const PressureParticle& pi, int x, int y) {
-  Vec2 delta(0.0, 0.0);
-  for (int dx = -1; dx <= 1; ++dx) {
-    const int nx = x + dx;
-    if (nx < 0) continue;
-    if (nx >= grid_width_) continue;
-    for (int dy = -1; dy <= 1; ++dy) {
-      const int ny = y + dy;
-      if (ny < 0) continue;
-      if (ny >= grid_width_) continue;
-      for (auto& pj : grid_[CellID(nx, ny)]) {
-        if (pi.id == pj.id) continue;
-        const Vec2 r = pi.pos - pj.pos;
-        if (r.squaredNorm() > radius2_) continue;
-        Real scorr = kernel_.Poly6(r)/kernel_.Poly6(Vec2(0.0,0.2*radius_));
-        scorr = scorr*scorr*scorr*scorr;
-        scorr *= -0.000002;
-        delta += (pi.lambda + pj.lambda + scorr) * kernel_.SpikyGrad(r);
-      }
-    }
-  }
-  return delta * density_inv_;
+void ParticleSystem::AccumulatePressureDelta(PressureParticle& pi, PressureParticle& pj) {
+  assert(pi.id != pj.id);
+  const Vec2 r = pi.pos - pj.pos;
+  if (r.squaredNorm() > radius2_) return;
+  Real scorr = kernel_.Poly6(r)/kernel_.Poly6(Vec2(0.0,0.2*radius_));
+  scorr = scorr*scorr*scorr*scorr;
+  scorr *= -0.000008;
+  const Vec2 delta = (pi.lambda + pj.lambda + scorr) * kernel_.SpikyGrad(r);
+  pi.pos_delta += delta;
+  pj.pos_delta -= delta;
 }
 
 void ParticleSystem::CalculatePressureDeltaOnGrid() {
   for (int ox = 0; ox < grid_width_; ++ox) {
     for (int oy = 0; oy < grid_height_; ++oy) {
-      for (auto& pi : grid_[CellID(ox, oy)]) {
-        pi.pos_delta = CalculateParticlePressureDelta(pi, ox, oy);
+      int cell_i = CellID(ox, oy);
+      for (int i = 0; i < grid_[cell_i].size(); ++i) {
+        PressureParticle& pi = grid_[cell_i][i];
+        pi.pos_delta = Vec2(0.0, 0.0);
+      }
+    }
+  }
+
+  for (int ox = 0; ox < grid_width_; ++ox) {
+    for (int oy = 0; oy < grid_height_; ++oy) {
+      int cell_i = CellID(ox, oy);
+      for (int i = 0; i < grid_[cell_i].size(); ++i) {
+        PressureParticle& pi = grid_[cell_i][i];
+
+        for (int j = i+1; j < grid_[cell_i].size(); ++j) {
+          PressureParticle& pj = grid_[cell_i][j];
+          AccumulatePressureDelta(pi, pj);
+        }
+      }
+
+      for (int dx = 0; dx <= 1; ++dx) {
+        const int nx = ox + dx;
+        if (nx >= grid_width_) continue;
+        for (int dy = ((dx == 0) ? 1 : -1); dy <= 1; ++dy) {
+          const int ny = oy + dy;
+          if (ny < 0) continue;
+          if (ny >= grid_width_) continue;
+
+          int cell_j = CellID(nx, ny);
+
+          for (int i = 0; i < grid_[cell_i].size(); ++i) {
+            PressureParticle& pi = grid_[cell_i][i];
+            for (int j = 0; j < grid_[cell_j].size(); ++j) {
+              PressureParticle& pj = grid_[cell_j][j];
+              AccumulatePressureDelta(pi, pj);
+            }
+          }
+        }
+      }
+
+      for (int i = 0; i < grid_[cell_i].size(); ++i) {
+        PressureParticle& pi = grid_[cell_i][i];
+        pi.pos_delta *= density_inv_;
       }
     }
   }
