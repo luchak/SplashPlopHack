@@ -11,6 +11,10 @@
 		C9B1CCFC1792284D008F177B /* libSplashPlopHack.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C9F536D01792152E0049391C /* libSplashPlopHack.a */; };
 		C9B1CD0417922BD8008F177B /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9B1CD0317922BD7008F177B /* libc++.dylib */; };
 		C9B1CD0617926EDF008F177B /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9B1CD0517926EDF008F177B /* CoreMotion.framework */; };
+		C9B1CD1017928074008F177B /* TTCShaderLibrary.m in Sources */ = {isa = PBXBuildFile; fileRef = C9B1CD0917928074008F177B /* TTCShaderLibrary.m */; };
+		C9B1CD1117928074008F177B /* TTCShaderProgram.m in Sources */ = {isa = PBXBuildFile; fileRef = C9B1CD0B17928074008F177B /* TTCShaderProgram.m */; };
+		C9B1CD1217928074008F177B /* TTCQuad.m in Sources */ = {isa = PBXBuildFile; fileRef = C9B1CD0D17928074008F177B /* TTCQuad.m */; };
+		C9B1CD1317928074008F177B /* TTCSurface.m in Sources */ = {isa = PBXBuildFile; fileRef = C9B1CD0F17928074008F177B /* TTCSurface.m */; };
 		C9F5367C179213E30049391C /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9F5367B179213E30049391C /* UIKit.framework */; };
 		C9F5367E179213E30049391C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9F5367D179213E30049391C /* Foundation.framework */; };
 		C9F53680179213E30049391C /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C9F5367F179213E30049391C /* CoreGraphics.framework */; };
@@ -84,6 +88,14 @@
 /* Begin PBXFileReference section */
 		C9B1CD0317922BD7008F177B /* libc++.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libc++.dylib"; path = "usr/lib/libc++.dylib"; sourceTree = SDKROOT; };
 		C9B1CD0517926EDF008F177B /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
+		C9B1CD0817928074008F177B /* TTCShaderLibrary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TTCShaderLibrary.h; sourceTree = "<group>"; };
+		C9B1CD0917928074008F177B /* TTCShaderLibrary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TTCShaderLibrary.m; sourceTree = "<group>"; };
+		C9B1CD0A17928074008F177B /* TTCShaderProgram.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TTCShaderProgram.h; sourceTree = "<group>"; };
+		C9B1CD0B17928074008F177B /* TTCShaderProgram.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TTCShaderProgram.m; sourceTree = "<group>"; };
+		C9B1CD0C17928074008F177B /* TTCQuad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TTCQuad.h; sourceTree = "<group>"; };
+		C9B1CD0D17928074008F177B /* TTCQuad.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TTCQuad.m; sourceTree = "<group>"; };
+		C9B1CD0E17928074008F177B /* TTCSurface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TTCSurface.h; sourceTree = "<group>"; };
+		C9B1CD0F17928074008F177B /* TTCSurface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TTCSurface.m; sourceTree = "<group>"; };
 		C9F53678179213E30049391C /* DripDrop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DripDrop.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9F5367B179213E30049391C /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		C9F5367D179213E30049391C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -178,9 +190,25 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C9B1CD071792800A008F177B /* ShaderTools */ = {
+			isa = PBXGroup;
+			children = (
+				C9B1CD0817928074008F177B /* TTCShaderLibrary.h */,
+				C9B1CD0917928074008F177B /* TTCShaderLibrary.m */,
+				C9B1CD0A17928074008F177B /* TTCShaderProgram.h */,
+				C9B1CD0B17928074008F177B /* TTCShaderProgram.m */,
+				C9B1CD0C17928074008F177B /* TTCQuad.h */,
+				C9B1CD0D17928074008F177B /* TTCQuad.m */,
+				C9B1CD0E17928074008F177B /* TTCSurface.h */,
+				C9B1CD0F17928074008F177B /* TTCSurface.m */,
+			);
+			path = ShaderTools;
+			sourceTree = "<group>";
+		};
 		C9F5366F179213E30049391C = {
 			isa = PBXGroup;
 			children = (
+				C9B1CD071792800A008F177B /* ShaderTools */,
 				C9F536BE1792142C0049391C /* SplashPlopHack Source */,
 				C9F53685179213E30049391C /* DripDrop */,
 				C9F536AD179213E30049391C /* DripDropTests */,
@@ -495,6 +523,10 @@
 				C9F5368C179213E30049391C /* main.m in Sources */,
 				C9F53690179213E30049391C /* DDAppDelegate.m in Sources */,
 				C9F536A0179213E30049391C /* DDViewController.m in Sources */,
+				C9B1CD1017928074008F177B /* TTCShaderLibrary.m in Sources */,
+				C9B1CD1117928074008F177B /* TTCShaderProgram.m in Sources */,
+				C9B1CD1217928074008F177B /* TTCQuad.m in Sources */,
+				C9B1CD1317928074008F177B /* TTCSurface.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
