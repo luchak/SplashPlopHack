@@ -240,7 +240,10 @@ static float phiShrinkFactor = 4.0;
     [_renderSplattedPositionsProgram use];
     glUniform2f([_renderSplattedPositionsProgram locationForUniformWithName:@"windowSize"], self.view.bounds.size.width/phiShrinkFactor, self.view.bounds.size.height/phiShrinkFactor);
     [_renderSplattedPositionsProgram bindTexture2D:_phiSurface.texture_id atIndex:0 toUniform:@"tex0"];
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     [[TTCQuad quad] drawWithProgram:_renderSplattedPositionsProgram];
+    glDisable(GL_BLEND);
 }
 
 
