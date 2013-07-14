@@ -143,7 +143,7 @@ void MouseButton(int button, int state, int x, int y) {
     float world_y = (window_h - y)*world_y_size / window_h + world_y_min;
     SPHack::Vec2 world_pos(world_x, world_y);
 
-    selected_particle = 1944;
+    selected_particle = -1;
     float closest_sq_dist = 1e20;
     for (int i = 0; i < ps->size(); ++i) {
       if (ps->isActive(i)) {

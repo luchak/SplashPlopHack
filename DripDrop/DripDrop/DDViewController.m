@@ -74,7 +74,7 @@ enum
     view.context = self.context;
     view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
     
-    _sph = [[SplashPlopHack alloc] initWithBounds:CGRectMake(0.0, 0.0, 1.0, 1.0) radius:0.03];
+    _sph = [[SplashPlopHack alloc] initWithBounds:CGRectMake(0.0, 0.0, 1.0, 1.0) radius:0.025];
     [_sph addParticlesInRect:CGRectMake(0.0, 0.0, 0.3, 0.5)];
     [_sph initDensity];
     
@@ -178,7 +178,7 @@ enum
     
     glUniformMatrix4fv(uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX], 1, 0, _modelViewProjectionMatrix.m);
     glUniform2f(uniforms[UNIFORM_WINDOW_SIZE], self.view.bounds.size.width, self.view.bounds.size.height);
-    glUniform1f(uniforms[UNIFORM_PARTICLE_RADIUS], [_sph radius]*0.33);
+    glUniform1f(uniforms[UNIFORM_PARTICLE_RADIUS], [_sph radius]*0.25);
     
     glEnableVertexAttribArray(GLKVertexAttribPosition);
     glVertexAttribPointer(GLKVertexAttribPosition, 2, GL_FLOAT, GL_FALSE, 0, _pos);

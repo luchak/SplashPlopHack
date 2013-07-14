@@ -205,7 +205,7 @@ Vec2 ParticleSystem::CalculateParticlePressureDelta(const PressureParticle& pi, 
         if (r.squaredNorm() > radius2_) continue;
         Real scorr = kernel_.Poly6(r)/kernel_.Poly6(Vec2(0.0,0.2*radius_));
         scorr = scorr*scorr*scorr*scorr;
-        scorr *= -0.0000001;
+        scorr *= -0.000002;
         delta += (pi.lambda + pj.lambda + scorr) * kernel_.SpikyGrad(r);
       }
     }
