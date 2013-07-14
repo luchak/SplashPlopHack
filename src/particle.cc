@@ -18,7 +18,7 @@ ParticleSystem::ParticleSystem(const AABB& bounds, Real radius) : bounds_(bounds
   grid_width_ = static_cast<int>(ceil(bounds.width() / grid_delta_));
   grid_height_ = static_cast<int>(ceil(bounds.height() / grid_delta_));
   grid_.resize(grid_width_*grid_height_);
-  static const int estimated_particles_per_cell = 8;
+  static const int estimated_particles_per_cell = 16;
   for (auto& grid_cell : grid_) {
     grid_cell.reserve(estimated_particles_per_cell);
   }
