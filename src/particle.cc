@@ -39,8 +39,8 @@ void ParticleSystem::AddParticles(const AABB& region) {
   AABB clipped_region = bounds_.Intersect(region);
 
   int particles_added = 0;
-  for (Real x = clipped_region.min()[0] + boundary_margin_; x < clipped_region.max()[0] - boundary_margin_; x += 0.5*radius_) {
-    for (Real y = clipped_region.min()[1] + boundary_margin_; y < clipped_region.max()[1] - boundary_margin_; y += 0.5*radius_) {
+  for (Real x = clipped_region.min()[0] + boundary_margin_; x < clipped_region.max()[0] - boundary_margin_; x += 0.6*radius_) {
+    for (Real y = clipped_region.min()[1] + boundary_margin_; y < clipped_region.max()[1] - boundary_margin_; y += 0.6*radius_) {
       if (!CreateParticle(Vec2(x, y), Vec2(0.0, 0.0))) {
         std::cerr << "Failed to create particle at: " << x << " " << y << std::endl;
       } else {

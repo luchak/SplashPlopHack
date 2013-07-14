@@ -9,6 +9,10 @@
 #import "DDAppdelegate.h"
 #import "DDViewController.h"
 #import <SplashPlopHack/SplashPlopHack.h>
+#import "../ShaderTools/TTCShaderLibrary.h"
+#import "../ShaderTools/TTCSurface.h"
+#import "../ShaderTools/TTCQuad.h"
+
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
@@ -29,6 +33,7 @@ enum
     NUM_ATTRIBUTES
 };
 
+static float phiShrinkFactor = 4.0;
 
 @interface DDViewController () {
     GLuint _program;
@@ -45,16 +50,23 @@ enum
     int _num_active;
     
     CMMotionManager* _motionManager;
+    
+    TTCShaderProgram* _surfaceRenderParticleSplatProgram;
+    TTCShaderProgram* _renderSplattedPositionsProgram;
+    TTCShaderProgram* _phiProgram;
+    TTCShaderProgram* _hblurProgram;
+    TTCShaderProgram* _vblurProgram;
+    TTCSurface* _positionWeightSplatSurface;
+    TTCSurface* _phiSurface;
+    TTCSurface* _phiTempSurface;
+    
+    
 }
 @property (strong, nonatomic) EAGLContext *context;
 
 - (void)setupGL;
 - (void)tearDownGL;
 
-- (BOOL)loadShaders;
-- (BOOL)compileShader:(GLuint *)shader type:(GLenum)type file:(NSString *)file;
-- (BOOL)linkProgram:(GLuint)prog;
-- (BOOL)validateProgram:(GLuint)prog;
 @end
 
 @implementation DDViewController
@@ -72,7 +84,6 @@ enum
     
     GLKView *view = (GLKView *)self.view;
     view.context = self.context;
-    view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
     
     _sph = [[SplashPlopHack alloc] initWithBounds:CGRectMake(0.0, 0.0, 1.0, 1.0) radius:0.025];
     [_sph addParticlesInRect:CGRectMake(0.0, 0.0, 0.3, 0.5)];
@@ -119,24 +130,39 @@ enum
 {
     [EAGLContext setCurrentContext:self.context];
     
-    [self loadShaders];
+    // yes width and height are transposed, no I don't know why this fixes it.
+    _positionWeightSplatSurface = [[TTCSurface alloc] initWithWidth:self.view.bounds.size.height/phiShrinkFactor height:self.view.bounds.size.width/phiShrinkFactor depth:4 fullFloat:NO];
+    _phiSurface = [[TTCSurface alloc] initWithWidth:self.view.bounds.size.height/phiShrinkFactor height:self.view.bounds.size.width/phiShrinkFactor depth:4 fullFloat:NO];
+    _phiTempSurface = [[TTCSurface alloc] initWithWidth:self.view.bounds.size.height/phiShrinkFactor height:self.view.bounds.size.width/phiShrinkFactor depth:4 fullFloat:NO];
+    TTCShaderLibrary* shaderLibrary = [[TTCShaderLibrary alloc] init];
+    [shaderLibrary compileFragmentShaderWithName:@"fShader"];
+    [shaderLibrary compileVertexShaderWithName:@"vShader"];
+    [shaderLibrary compileFragmentShaderWithName:@"show_texture"];
+    [shaderLibrary compileVertexShaderWithName:@"vertex_default"];
+    [shaderLibrary compileFragmentShaderWithName:@"phi"];
+    [shaderLibrary compileFragmentShaderWithName:@"hblur"];
+    [shaderLibrary compileFragmentShaderWithName:@"vblur"];
+
     
-    glEnableVertexAttribArray(GLKVertexAttribPosition);
-    glVertexAttribPointer(GLKVertexAttribPosition, 3, GL_FLOAT, GL_FALSE, 24, BUFFER_OFFSET(0));
-    glEnableVertexAttribArray(GLKVertexAttribNormal);
-    glVertexAttribPointer(GLKVertexAttribNormal, 3, GL_FLOAT, GL_FALSE, 24, BUFFER_OFFSET(12));
-    
-    glBindVertexArrayOES(0);
+    [_positionWeightSplatSurface bindAsOutput];
+    _surfaceRenderParticleSplatProgram = [shaderLibrary programWithShaders:@[@"fShader", @"vShader"] error:NULL];
+    [_surfaceRenderParticleSplatProgram validate];
+    _renderSplattedPositionsProgram = [shaderLibrary programWithShaders:@[@"show_texture", @"vertex_default"] error:NULL];
+    [_renderSplattedPositionsProgram validate];
+    _phiProgram = [shaderLibrary programWithShaders:@[@"phi", @"vertex_default"] error:NULL];
+    [_phiProgram validate];
+    _hblurProgram = [shaderLibrary programWithShaders:@[@"hblur", @"vertex_default"] error:NULL];
+    [_hblurProgram validate];
+    _vblurProgram = [shaderLibrary programWithShaders:@[@"vblur", @"vertex_default"] error:NULL];
+    [_vblurProgram validate];
+    [_positionWeightSplatSurface unbindAsOutput];
 }
 
 - (void)tearDownGL
 {
     [EAGLContext setCurrentContext:self.context];
-    
-    if (_program) {
-        glDeleteProgram(_program);
-        _program = 0;
-    }
+    _surfaceRenderParticleSplatProgram = nil;
+    _renderSplattedPositionsProgram = nil;
 }
 
 #pragma mark - GLKView and GLKViewController delegate methods
@@ -144,11 +170,7 @@ enum
 - (void)update
 {
     float aspect = fabsf(self.view.bounds.size.width / self.view.bounds.size.height);
-    GLKMatrix4 projectionMatrix = GLKMatrix4MakeOrtho(0.5*(1.0-aspect), 1.0 + 0.5*(aspect-1.0), 0.0, 1.0, -1.0, 1.0);
-        
-    GLKMatrix4 baseModelViewMatrix = GLKMatrix4Identity;
-    
-    _modelViewProjectionMatrix = GLKMatrix4Multiply(projectionMatrix, baseModelViewMatrix);
+    _modelViewProjectionMatrix = GLKMatrix4MakeOrtho(0.5*(1.0-aspect), 1.0 + 0.5*(aspect-1.0), 0.0, 1.0, -1.0, 1.0);
 
     [_sph step:1.0/30.0];
     
@@ -170,172 +192,56 @@ enum
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
-    glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    [_surfaceRenderParticleSplatProgram use];
+    glUniformMatrix4fv([_surfaceRenderParticleSplatProgram locationForUniformWithName:@"modelViewProjectionMatrix"], 1, 0, _modelViewProjectionMatrix.m);
+    glUniform2f([_surfaceRenderParticleSplatProgram locationForUniformWithName:@"windowSize"], self.view.bounds.size.width/phiShrinkFactor, self.view.bounds.size.height/phiShrinkFactor);
+    glUniform1f([_surfaceRenderParticleSplatProgram locationForUniformWithName:@"particleRadius"], [_sph radius]);
     
-    // Render the object again with ES2
-    glUseProgram(_program);
+    [_positionWeightSplatSurface bindAsOutput];
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+    [_surfaceRenderParticleSplatProgram drawPoints:_pos withDimension:2 andLength:_num_active];
+    [_positionWeightSplatSurface unbindAsOutput];
+    glBlendFunc(GL_ONE, GL_ZERO);
+    glDisable(GL_BLEND);
     
-    glUniformMatrix4fv(uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX], 1, 0, _modelViewProjectionMatrix.m);
-    glUniform2f(uniforms[UNIFORM_WINDOW_SIZE], self.view.bounds.size.width, self.view.bounds.size.height);
-    glUniform1f(uniforms[UNIFORM_PARTICLE_RADIUS], [_sph radius]*0.25);
     
-    glEnableVertexAttribArray(GLKVertexAttribPosition);
-    glVertexAttribPointer(GLKVertexAttribPosition, 2, GL_FLOAT, GL_FALSE, 0, _pos);
-    glDrawArrays(GL_POINTS, 0, _num_active);
-    glDisableVertexAttribArray(GLKVertexAttribPosition);
+    [_phiProgram use];
+    glUniform2f([_phiProgram locationForUniformWithName:@"windowSize"], self.view.bounds.size.width/phiShrinkFactor, self.view.bounds.size.height/phiShrinkFactor);
+    glUniform1f([_phiProgram locationForUniformWithName:@"particleRadius"], [_sph radius]);
+    [_phiSurface bindAsOutput];
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    [_phiProgram bindTexture2D:_positionWeightSplatSurface.texture_id atIndex:0 toUniform:@"tex0"];
+    [[TTCQuad quad] drawWithProgram:_phiProgram];
+    
+    [_hblurProgram use];
+    glUniform2f([_hblurProgram locationForUniformWithName:@"windowSize"], self.view.bounds.size.width/phiShrinkFactor, self.view.bounds.size.height/phiShrinkFactor);
+    [_phiTempSurface bindAsOutput];
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    [_hblurProgram bindTexture2D:_phiSurface.texture_id atIndex:0 toUniform:@"tex0"];
+    [[TTCQuad quad] drawWithProgram:_hblurProgram];
+
+    [_vblurProgram use];
+    glUniform2f([_vblurProgram locationForUniformWithName:@"windowSize"], self.view.bounds.size.width/phiShrinkFactor, self.view.bounds.size.height/phiShrinkFactor);
+    [_phiSurface bindAsOutput];
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    [_vblurProgram bindTexture2D:_phiTempSurface.texture_id atIndex:0 toUniform:@"tex0"];
+    [[TTCQuad quad] drawWithProgram:_vblurProgram];
+    
+    [((GLKView*)self.view) bindDrawable];
+    glViewport(0, 0, self.view.bounds.size.width, self.view.bounds.size.height);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    [_renderSplattedPositionsProgram use];
+    glUniform2f([_renderSplattedPositionsProgram locationForUniformWithName:@"windowSize"], self.view.bounds.size.width/phiShrinkFactor, self.view.bounds.size.height/phiShrinkFactor);
+    [_renderSplattedPositionsProgram bindTexture2D:_phiSurface.texture_id atIndex:0 toUniform:@"tex0"];
+    [[TTCQuad quad] drawWithProgram:_renderSplattedPositionsProgram];
 }
 
-#pragma mark -  OpenGL ES 2 shader compilation
-
-- (BOOL)loadShaders
-{
-    GLuint vertShader, fragShader;
-    NSString *vertShaderPathname, *fragShaderPathname;
-    
-    // Create shader program.
-    _program = glCreateProgram();
-    
-    // Create and compile vertex shader.
-    vertShaderPathname = [[NSBundle mainBundle] pathForResource:@"Shader" ofType:@"vsh"];
-    if (![self compileShader:&vertShader type:GL_VERTEX_SHADER file:vertShaderPathname]) {
-        NSLog(@"Failed to compile vertex shader");
-        return NO;
-    }
-    
-    // Create and compile fragment shader.
-    fragShaderPathname = [[NSBundle mainBundle] pathForResource:@"Shader" ofType:@"fsh"];
-    if (![self compileShader:&fragShader type:GL_FRAGMENT_SHADER file:fragShaderPathname]) {
-        NSLog(@"Failed to compile fragment shader");
-        return NO;
-    }
-    
-    // Attach vertex shader to program.
-    glAttachShader(_program, vertShader);
-    
-    // Attach fragment shader to program.
-    glAttachShader(_program, fragShader);
-    
-    // Bind attribute locations.
-    // This needs to be done prior to linking.
-    glBindAttribLocation(_program, GLKVertexAttribPosition, "position");
-    
-    // Link program.
-    if (![self linkProgram:_program]) {
-        NSLog(@"Failed to link program: %d", _program);
-        
-        if (vertShader) {
-            glDeleteShader(vertShader);
-            vertShader = 0;
-        }
-        if (fragShader) {
-            glDeleteShader(fragShader);
-            fragShader = 0;
-        }
-        if (_program) {
-            glDeleteProgram(_program);
-            _program = 0;
-        }
-        
-        return NO;
-    }
-    
-    // Get uniform locations.
-    uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX] = glGetUniformLocation(_program, "modelViewProjectionMatrix");
-    uniforms[UNIFORM_WINDOW_SIZE] = glGetUniformLocation(_program, "windowSize");
-    uniforms[UNIFORM_PARTICLE_RADIUS] = glGetUniformLocation(_program, "particleRadius");
-    
-    // Release vertex and fragment shaders.
-    if (vertShader) {
-        glDetachShader(_program, vertShader);
-        glDeleteShader(vertShader);
-    }
-    if (fragShader) {
-        glDetachShader(_program, fragShader);
-        glDeleteShader(fragShader);
-    }
-    
-    return YES;
-}
-
-- (BOOL)compileShader:(GLuint *)shader type:(GLenum)type file:(NSString *)file
-{
-    GLint status;
-    const GLchar *source;
-    
-    source = (GLchar *)[[NSString stringWithContentsOfFile:file encoding:NSUTF8StringEncoding error:nil] UTF8String];
-    if (!source) {
-        NSLog(@"Failed to load vertex shader");
-        return NO;
-    }
-    
-    *shader = glCreateShader(type);
-    glShaderSource(*shader, 1, &source, NULL);
-    glCompileShader(*shader);
-    
-#if defined(DEBUG)
-    GLint logLength;
-    glGetShaderiv(*shader, GL_INFO_LOG_LENGTH, &logLength);
-    if (logLength > 0) {
-        GLchar *log = (GLchar *)malloc(logLength);
-        glGetShaderInfoLog(*shader, logLength, &logLength, log);
-        NSLog(@"Shader compile log:\n%s", log);
-        free(log);
-    }
-#endif
-    
-    glGetShaderiv(*shader, GL_COMPILE_STATUS, &status);
-    if (status == 0) {
-        glDeleteShader(*shader);
-        return NO;
-    }
-    
-    return YES;
-}
-
-- (BOOL)linkProgram:(GLuint)prog
-{
-    GLint status;
-    glLinkProgram(prog);
-    
-#if defined(DEBUG)
-    GLint logLength;
-    glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &logLength);
-    if (logLength > 0) {
-        GLchar *log = (GLchar *)malloc(logLength);
-        glGetProgramInfoLog(prog, logLength, &logLength, log);
-        NSLog(@"Program link log:\n%s", log);
-        free(log);
-    }
-#endif
-    
-    glGetProgramiv(prog, GL_LINK_STATUS, &status);
-    if (status == 0) {
-        return NO;
-    }
-    
-    return YES;
-}
-
-- (BOOL)validateProgram:(GLuint)prog
-{
-    GLint logLength, status;
-    
-    glValidateProgram(prog);
-    glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &logLength);
-    if (logLength > 0) {
-        GLchar *log = (GLchar *)malloc(logLength);
-        glGetProgramInfoLog(prog, logLength, &logLength, log);
-        NSLog(@"Program validate log:\n%s", log);
-        free(log);
-    }
-    
-    glGetProgramiv(prog, GL_VALIDATE_STATUS, &status);
-    if (status == 0) {
-        return NO;
-    }
-    
-    return YES;
-}
 
 @end

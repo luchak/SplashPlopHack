@@ -101,7 +101,22 @@ typedef struct {
 }
 
 - (int) locationForUniformWithName:(NSString*)name {
-    return [((NSNumber*)[self.attrib_info objectForKey:name]) integerValue];
+    VariableInfo info;
+    [(NSValue*)[self.uniform_info objectForKey:name] getValue:&info];
+    return info.location;
+}
+
+- (void) use {
+    glUseProgram(self.program_id);
+}
+
+- (BOOL) drawPoints:(GLfloat*) points withDimension:(GLint)dim andLength:(GLint)length {
+    glUseProgram(self.program_id);
+    glEnableVertexAttribArray(TTC_ATTRIB_POSITION);
+    glVertexAttribPointer(TTC_ATTRIB_POSITION, dim, GL_FLOAT, GL_FALSE, 0, points);
+    glDrawArrays(GL_POINTS, 0, length);
+    glDisableVertexAttribArray(TTC_ATTRIB_POSITION);
+    return YES;
 }
 
 - (BOOL) linkUsingShaders:(NSArray*) shaders {
@@ -118,7 +133,6 @@ typedef struct {
     glGetProgramiv(self.program_id, GL_LINK_STATUS, &did_link);
     if (did_link != GL_TRUE) {
         NSLog(@"Failed to link program with id %d.", self.program_id);
-#if defined(DEBUG)
         GLint log_length;
         glGetProgramiv(self.program_id, GL_INFO_LOG_LENGTH, &log_length);
         if (log_length > 0) {
@@ -127,7 +141,6 @@ typedef struct {
             NSLog(@"Program link log:\n%s", log);
             free(log);
         }
-#endif
         glDeleteProgram(self.program_id);
         return NO;
     } else {

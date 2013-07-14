@@ -85,7 +85,6 @@
     glGetShaderiv(shader_id, GL_COMPILE_STATUS, &did_compile);
     if (did_compile != GL_TRUE) {
         NSLog(@"Failed to compile shader with name %@ and extension %@.", name, extension);
-#if defined(DEBUG)
         GLint log_length;
         glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &log_length);
         if (log_length > 0) {
@@ -94,7 +93,6 @@
             NSLog(@"Shader compile log:\n%s", log);
             free(log);
         }
-#endif
         glDeleteShader(shader_id);
         return NO;
     } else {

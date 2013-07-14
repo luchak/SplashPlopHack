@@ -21,6 +21,9 @@ enum TTCShaderAttrib {
 - (void) bindTexture2D:(GLuint)texture_id atIndex:(int)index toUniform:(NSString*)uniform;
 - (int) locationForUniformWithName:(NSString*)name;
 
+- (void) use;
+- (BOOL) drawPoints:(GLfloat*) points withDimension:(GLint)dim andLength:(GLint)length;
+
 @property (nonatomic,readonly,assign) GLuint program_id;
 
 @end
