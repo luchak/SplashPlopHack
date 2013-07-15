@@ -23,7 +23,7 @@
 @end
 
 static const int cliplength = 4410;
-static const float thresh = 0.04;
+static const float thresh = 0.06;
 
 @implementation DDAudioPlayer
 

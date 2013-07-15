@@ -87,6 +87,8 @@ static float phiShrinkFactor = 4.0;
     view.context = self.context;
     
     _sph = [[SplashPlopHack alloc] initWithBounds:CGRectMake(0.0, 0.0, 1.0, 1.0) radius:0.03];
+    [_sph setCFMScale: 0.03];
+    [_sph setSurfaceTension: 0.000005];
     [_sph addParticlesInRect:CGRectMake(0.0, 0.0, 0.5, 0.5)];
     [_sph clear];
     

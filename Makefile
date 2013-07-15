@@ -35,7 +35,7 @@ ifneq (${MAKECMDGOALS},"clean")
 -include build.mk
 endif
 
-CPPFLAGS = -iquote . -Wall ${OPT_FLAGS} ${PLATFORM_CPPFLAGS} -std=c++11
+CPPFLAGS = -iquote . -Wall ${DEBUG_OPT_FLAGS} ${PLATFORM_CPPFLAGS} -std=c++11
 LDFLAGS =  -lpthread ${GL_LIB_FLAGS} ${PLATFORM_LDFLAGS} -lprofiler
 
 build.mk: find_prereqs.sh

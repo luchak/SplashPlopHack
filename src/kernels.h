@@ -11,6 +11,11 @@ class KernelEvaluator {
  public:
   KernelEvaluator(Real h);
 
+  inline Real Poly6NonNormUnsafe(const Vec2& r) const {
+    const Real t = h2_ - r.squaredNorm();
+    return t*t*t;
+  }
+
   inline Real Poly6NonNorm(const Vec2& r) const {
     const Real t = h2_ - r.squaredNorm();
     return std::max(static_cast<Real>(0.0), t*t*t);
@@ -23,6 +28,12 @@ class KernelEvaluator {
 
   inline Real Poly6(const Vec2& pi, const Vec2& pj) const {
     return Poly6(pi - pj);
+  }
+
+  inline Vec2 SpikyGradNonNormUnsafe(const Vec2& r) const {
+    Real r_len = std::max(r.norm(), static_cast<Real>(1e-8));
+    const Real t = h_ - r_len;
+    return r*(t*t/r_len);
   }
 
   inline Vec2 SpikyGradNonNorm(const Vec2& r) const {

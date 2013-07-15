@@ -25,5 +25,7 @@
 - (void) setGravity:(CGPoint)g;
 - (void) clear;
 - (CGFloat) accelMagnitude:(int)pid;
+- (void) setSurfaceTension:(CGFloat)tension;
+- (void) setCFMScale:(CGFloat)scale;
 
 @end

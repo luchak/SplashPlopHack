@@ -35,7 +35,7 @@ class ParticleSystem {
 
   void AddParticles(const AABB& region, int max=-1);
 
-  void Step(Real dt);
+  void Step(Real dt, int substeps=2, int pressure_iters=4);
 
   bool isActive(ParticleIDType pid) const { return (flag_[pid] & PARTICLE_FLAG_ACTIVE) != 0; }
   Vec2 pos(ParticleIDType pid) const { return pos_[pid]; }
@@ -51,6 +51,12 @@ class ParticleSystem {
   void InitDensity();
 
   void Clear();
+
+  // good values for this are ~0.01-0.05
+  void setCFMScale(Real scale) { cfm_scale_ = scale; }
+
+  // good values for this constant are pretty tiny
+  void setSurfaceTension(Real tension) { scorr_scale_ = -tension; }
 
  private:
   bool CreateParticle(const Vec2& pos, const Vec2& vel);
@@ -77,6 +83,8 @@ class ParticleSystem {
 
   Real radius_;
   Real radius2_;
+  Real scorr_norm_;
+  Real scorr_scale_;
   KernelEvaluator kernel_;
   std::array<Vec2, kMaxParticles> pos_;
   std::array<Vec2, kMaxParticles> predicted_pos_;
@@ -91,6 +99,8 @@ class ParticleSystem {
   int grid_width_;
   int grid_height_;
 
+  // cfm_epsilon_ = cfm_scale_ / density_inv_
+  Real cfm_scale_;
   Real cfm_epsilon_;
   Real density_inv_;
 

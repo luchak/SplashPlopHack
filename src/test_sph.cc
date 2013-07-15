@@ -108,7 +108,7 @@ void Render() {
       if (i == selected_particle) {
         glColor3f(1.0, 1.0, 1.0);
       } else {
-        glColor3f(density-1.0, 1.0-fabs(1.0-density), 1.0-density);
+        glColor3f(5.0*(density-1.0), 1.0-5.0*fabs(1.0-density), 5.0*(1.0-density));
       }
       DrawCircle(ps->pos(i)[0], ps->pos(i)[1], ps->radius()/4.0);
     }
@@ -183,7 +183,9 @@ int main(int argc, char* argv[]) {
   ps.reset(
       new SPHack::ParticleSystem(
           SPHack::AABB(SPHack::Vec2(0.0, 0.0), SPHack::Vec2(1.0, 1.0)),
-          0.016));
+          0.012));
+  ps->setCFMScale(0.01);
+  ps->setSurfaceTension(0.0000008);
   ps->AddParticles(SPHack::AABB(SPHack::Vec2(0.0, 0.0), SPHack::Vec2(0.3, 0.7)));
   ps->InitDensity();
   ps->Clear();

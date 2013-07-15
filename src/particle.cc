@@ -26,7 +26,10 @@ ParticleSystem::ParticleSystem(const AABB& bounds, Real radius) : bounds_(bounds
   radius2_ = radius_ * radius_;
   static const Real density = 1.7e2 / radius2_;
   density_inv_ = 1.0 / density;
-  cfm_epsilon_ = 1e3;
+  cfm_scale_ = 0.01;
+  cfm_epsilon_ = cfm_scale_ / density_inv_;
+  scorr_norm_ = 1.0/kernel_.Poly6NonNorm(Vec2(0.0,0.2*radius_));
+  scorr_scale_ = -0.0000008;
 
   kernel_ = KernelEvaluator(radius_);
   
@@ -79,20 +82,18 @@ void ParticleSystem::CommitPositions() {
   pos_.swap(predicted_pos_);
 }
 
-void ParticleSystem::Step(Real dt) {
-  static const int kSubsteps = 2;
-  dt /= kSubsteps;
+void ParticleSystem::Step(Real dt, int substeps, int pressure_iters) {
+  dt /= substeps;
 
   for (size_t i = 0; i < size(); ++i) {
     accel_[i] = Vec2(0.0, 0.0);
   }
 
-  for (int substep = 0; substep < kSubsteps; ++substep) {
+  for (int substep = 0; substep < substeps; ++substep) {
     ApplyForces(dt);
     PredictPositions(dt);
     BuildGrid();
-    static const int kIters = 4;
-    for (int i = 0; i < kIters; ++i) {
+    for (int i = 0; i < pressure_iters; ++i) {
       SubstepResetGrid();
       CalculateLambdaOnGrid();
       CalculatePressureDeltaOnGrid();
@@ -120,7 +121,7 @@ void ParticleSystem::InitDensity() {
   }
 
   density_inv_ /= max_density;
-  cfm_epsilon_ = 0.03 / density_inv_;
+  cfm_epsilon_ = cfm_scale_ / density_inv_;
   std::cerr << "density: " << (1.0 / density_inv_) << std::endl;
   std::cerr << "cfm eps: " << cfm_epsilon_ << std::endl;
 }
@@ -189,10 +190,10 @@ void ParticleSystem::SubstepResetGrid() {
 void ParticleSystem::AccumulateLambdaData(PressureParticle& pi, PressureParticle& pj) {
   const Vec2 r = pi.pos - pj.pos;
   if (r.squaredNorm() > radius2_) return;
-  const Real poly6_weight = kernel_.Poly6NonNorm(r);
+  const Real poly6_weight = kernel_.Poly6NonNormUnsafe(r);
   pi.density += poly6_weight;
   pj.density += poly6_weight;
-  const Vec2 grad = kernel_.SpikyGradNonNorm(r);
+  const Vec2 grad = kernel_.SpikyGradNonNormUnsafe(r);
   const Real gradSquaredNorm = grad.squaredNorm();
   pi.cj_grad_norm_squared_sum += gradSquaredNorm;
   pj.cj_grad_norm_squared_sum += gradSquaredNorm;
@@ -248,10 +249,10 @@ void ParticleSystem::CalculateLambdaOnGrid() {
 void ParticleSystem::AccumulatePressureDelta(PressureParticle& pi, PressureParticle& pj) {
   const Vec2 r = pi.pos - pj.pos;
   if (r.squaredNorm() > radius2_) return;
-  Real scorr = kernel_.Poly6NonNorm(r)/kernel_.Poly6NonNorm(Vec2(0.0,0.2*radius_));
+  Real scorr = kernel_.Poly6NonNormUnsafe(r)*scorr_norm_;
   scorr = scorr*scorr*scorr*scorr;
-  scorr *= -0.000005;
-  const Vec2 delta = (pi.lambda + pj.lambda + scorr) * kernel_.SpikyGradNonNorm(r);
+  scorr *= scorr_scale_;
+  const Vec2 delta = (pi.lambda + pj.lambda + scorr) * kernel_.SpikyGradNonNormUnsafe(r);
   pi.pos_delta += delta;
   pj.pos_delta -= delta;
 }

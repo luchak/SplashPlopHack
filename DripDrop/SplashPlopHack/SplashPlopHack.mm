@@ -93,5 +93,13 @@
     return _particles->accelMagnitude(pid);
 }
 
+- (void) setSurfaceTension:(CGFloat)tension {
+    _particles->setSurfaceTension(tension);
+}
+
+- (void) setCFMScale:(CGFloat)scale {
+    _particles->setCFMScale(scale);
+}
+
 
 @end
